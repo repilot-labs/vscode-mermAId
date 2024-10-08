@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { DiagramDocument } from './diagramDocument';
 import { getHistoryMessages, getContextMessage } from './chatHelpers';
+import { logMessage } from './extension';
 
 export function registerChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = chatRequestHandler;
@@ -122,6 +123,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             }
         }
 
+        logMessage(mermaidDiagram);
         isMermaidDiagramStreamingIn = false;
 
         // Validate
@@ -136,7 +138,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             // TODO: Loop back to fix the diagram
             stream.markdown('Please try again.');
             // log
-            console.error(e?.message ?? e);
+            logMessage(`ERR: ${e?.message ?? e}`);
         }
     };
 
