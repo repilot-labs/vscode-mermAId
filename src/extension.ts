@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
-
-	registerChatParticipant(context);
+    registerChatParticipant(context);
 }
 
 const llmInstructions = `You are helpful chat assistant that relies heavily on creating diagrams for the user.
@@ -17,7 +16,7 @@ function registerChatParticipant(context: vscode.ExtensionContext) {
     context.subscriptions.push(toolUser);
 }
 
-async function chatRequestHandler (request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
+async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
     const models = await vscode.lm.selectChatModels({
         vendor: 'copilot',
         family: 'gpt-4o'
@@ -40,14 +39,40 @@ async function chatRequestHandler (request: vscode.ChatRequest, chatContext: vsc
 
     const response = await model.sendRequest(messages, options, token);
 
+    const diagramPrefix = '```mermaid';
+    let parsingDiagram = false;
+    let prefix = '';
+    let diagram = '';
+
     for await (const part of response.stream) {
         if (part instanceof vscode.LanguageModelChatResponseTextPart) {
+            if (parsingDiagram) {
+                diagram += part.value;
+                if (part.value.endsWith('```')) {
+                    parsingDiagram = false;
+                    await openDiagramInEditor(diagram);
+                }
+            } else {
+                const current = prefix + part.value;
+                if (diagramPrefix === current) {
+                    parsingDiagram = true;
+                    diagram = current;
+                    prefix = '';
+                } else if (diagramPrefix.startsWith(current)) {
+                    prefix = current;
+                }
+            }
             stream.markdown(part.value);
         } else if (part instanceof vscode.LanguageModelChatResponseToolCallPart) {
             throw new Error('Tool calls are not supported yet.');
         }
     }
 };
+
+async function openDiagramInEditor(diagram: string) {
+    const document = await vscode.workspace.openTextDocument({ language: 'markdown', content: diagram });
+    vscode.commands.executeCommand('markdown.showPreview', document.uri);
+}
 
 async function getContextMessage(references: ReadonlyArray<vscode.ChatPromptReference>): Promise<string> {
     const contextParts = (await Promise.all(references.map(async ref => {
@@ -96,4 +121,4 @@ async function getHistoryMessages(context: vscode.ChatContext): Promise<vscode.L
     return messages;
 }
 
-export function deactivate() {}
+export function deactivate() { }
