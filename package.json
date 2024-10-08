@@ -10,18 +10,25 @@
   "categories": [
     "Chat"
   ],
+  "enabledApiProposals": [
+        "lmTools"
+  ],
   "extensionDependencies": [
     "bierner.markdown-mermaid"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "copilot-mermaid-diagram.helloWorld",
-        "title": "Hello World"
-      }
-    ]
+    "chatParticipants": [
+            {
+                "id": "copilot-diagram.mermAId",
+                "fullName": "mermAId Diagrams",
+                "name": "mermAId",
+                "description": "Work with diagrams in the chat",
+                "isSticky": true,
+                "supportsToolReferences": true
+            }
+        ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
