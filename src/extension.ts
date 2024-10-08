@@ -4,16 +4,19 @@ export function activate(context: vscode.ExtensionContext) {
     registerChatParticipant(context);
 }
 
-const llmInstructions = `You are helpful chat assistant that relies heavily on creating diagrams for the user.
-If a diagram would be helpful in the response, your reponse should only be a diagram followed by an explanation.
-Generated diagrams must use the mermaid syntax, including surrounding with mermaid\`\`\` and \`\`\` tags so that it is rendered correctly for the user.`;
+const llmInstructions = `
+You are helpful chat assistant that creates diagrams for the user using the mermaid syntax.
+The final segment of your response should always be a valid mermaid diagram prefixed with a line containing  \`\`\`mermaid
+and suffixed with a line containing \`\`\`.
+Only ever include the \`\`\` delimiter in the two places mentioned above.
+`;
 
 function registerChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = chatRequestHandler;
 
-    const toolUser = vscode.chat.createChatParticipant('copilot-diagram.mermAId', handler);
-    toolUser.iconPath = new vscode.ThemeIcon('pie-chart');
-    context.subscriptions.push(toolUser);
+    const participant = vscode.chat.createChatParticipant('copilot-diagram.mermAId', handler);
+    participant.iconPath = new vscode.ThemeIcon('pie-chart');
+    context.subscriptions.push(participant);
 }
 
 async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
@@ -29,7 +32,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
     };
 
     const messages = [
-        vscode.LanguageModelChatMessage.User(llmInstructions),
+        vscode.LanguageModelChatMessage.Assistant(llmInstructions),
     ];
     messages.push(...await getHistoryMessages(chatContext));
     if (request.references.length) {
@@ -37,35 +40,43 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
     }
     messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
 
-    const response = await model.sendRequest(messages, options, token);
+    let isMermaidDiagramStreamingIn = false;
+    let mermaidDiagram = '';
 
-    const diagramPrefix = '```mermaid';
-    let parsingDiagram = false;
-    let prefix = '';
-    let diagram = '';
+    const response = await model.sendRequest(messages, options, token);
 
     for await (const part of response.stream) {
         if (part instanceof vscode.LanguageModelChatResponseTextPart) {
-            if (parsingDiagram) {
-                diagram += part.value;
-                if (part.value.endsWith('```')) {
-                    parsingDiagram = false;
-                    await openDiagramInEditor(diagram);
-                }
-            } else {
-                const current = prefix + part.value;
-                if (diagramPrefix === current) {
-                    parsingDiagram = true;
-                    diagram = current;
-                    prefix = '';
-                } else if (diagramPrefix.startsWith(current)) {
-                    prefix = current;
-                }
+            if (!isMermaidDiagramStreamingIn && part.value.includes('```')) {
+                stream.progress('Validating mermaid diagram');
+                isMermaidDiagramStreamingIn = true;
             }
-            stream.markdown(part.value);
+
+            if (isMermaidDiagramStreamingIn) {
+                mermaidDiagram += part.value;
+            } else {
+                stream.markdown(part.value);
+            }
         } else if (part instanceof vscode.LanguageModelChatResponseToolCallPart) {
             throw new Error('Tool calls are not supported yet.');
         }
+    }
+
+    isMermaidDiagramStreamingIn = false;
+    
+    // Validate
+    const mermaid = (await import('mermaid')).default;
+    try {
+        const trimmedDiagram = mermaidDiagram.replace(/```mermaid/, '').replace(/```/, '').trim();
+        const diagramType = await mermaid.parse(trimmedDiagram);
+        stream.progress(`Generating ${diagramType.diagramType} diagram`);
+        stream.markdown(mermaidDiagram);
+        openDiagramInEditor(mermaidDiagram);
+    } catch (e: any) {
+        // TODO: Loop back to fix the diagram
+        stream.markdown('Please try again.');
+        // log
+        console.error(e?.message ?? e);
     }
 };
 
