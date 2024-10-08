@@ -5,7 +5,9 @@ export function activate(context: vscode.ExtensionContext) {
 	registerChatParticipant(context);
 }
 
-const llmInstructions = 'You are helpful chat assistant that can create diagrams for the user using the mermaid syntax.';
+const llmInstructions = `You are helpful chat assistant that relies heavily on creating diagrams for the user.
+If a diagram would be helpful in the response, your reponse should only be a diagram followed by an explanation.
+Generated diagrams must use the mermaid syntax, including surrounding with mermaid\`\`\` and \`\`\` tags so that it is rendered correctly for the user.`;
 
 function registerChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = chatRequestHandler;
@@ -24,7 +26,7 @@ async function chatRequestHandler (request: vscode.ChatRequest, chatContext: vsc
     const model = models[0];
 
     const options: vscode.LanguageModelChatRequestOptions = {
-        justification: 'Just because!',
+        justification: 'To collaborate on diagrams',
     };
 
     const messages = [
