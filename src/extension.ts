@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { DiagramDocument } from './diagramDocument';
 
 export function activate(context: vscode.ExtensionContext) {
     registerChatParticipant(context);
@@ -18,6 +19,8 @@ function registerChatParticipant(context: vscode.ExtensionContext) {
     participant.iconPath = new vscode.ThemeIcon('pie-chart');
     context.subscriptions.push(participant);
 }
+
+const diagramManager = new DiagramDocument();
 
 async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
     const models = await vscode.lm.selectChatModels({
@@ -71,7 +74,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         const diagramType = await mermaid.parse(trimmedDiagram);
         stream.progress(`Generating ${diagramType.diagramType} diagram`);
         stream.markdown(mermaidDiagram);
-        openDiagramInEditor(mermaidDiagram);
+        await diagramManager.setContent(mermaidDiagram);
     } catch (e: any) {
         // TODO: Loop back to fix the diagram
         stream.markdown('Please try again.');
@@ -79,11 +82,6 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         console.error(e?.message ?? e);
     }
 };
-
-async function openDiagramInEditor(diagram: string) {
-    const document = await vscode.workspace.openTextDocument({ language: 'markdown', content: diagram });
-    vscode.commands.executeCommand('markdown.showPreview', document.uri);
-}
 
 async function getContextMessage(references: ReadonlyArray<vscode.ChatPromptReference>): Promise<string> {
     const contextParts = (await Promise.all(references.map(async ref => {
