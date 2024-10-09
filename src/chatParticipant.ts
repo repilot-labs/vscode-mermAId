@@ -70,8 +70,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         "The user asked for a UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols " +
           "not defined in the current context. You should call it multiple times since you will likely need to get the definitions of multiple symbols." +
           " The types of class relationships in a UML diagram are: Inheritance, Composition, Aggregation, Association, Link, Dependency, Realization." +
-          " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram." +
-          " Finally return me 3 pieces of information that you would like to have learned to improve the diagram."
+          " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram."
       )
     );
   }
