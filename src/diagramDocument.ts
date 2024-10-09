@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Diagram } from './diagram';
 
 export class DiagramDocument {
     private content: string = '';
@@ -12,8 +13,8 @@ export class DiagramDocument {
         });
     }
 
-    async setContent(content: string) {
-        this.content = content;
+    async update(diagram: Diagram) {
+        this.content = diagram.content;
         if (!this.document) {
             this.document = await vscode.workspace.openTextDocument({ language: 'markdown', content: this.content });
             await vscode.window.showTextDocument(this.document);
@@ -25,7 +26,7 @@ export class DiagramDocument {
         }
     }
 
-    private showPreview () {
+    private showPreview() {
         if (this.document) {
             vscode.commands.executeCommand('markdown.showPreview', this.document.uri);
         }
