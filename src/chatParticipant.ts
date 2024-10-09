@@ -22,7 +22,7 @@ Don't make assumptions about the situation- gather context first, then perform t
 Don't ask the user for confirmation to use tools, just use them.
 If you find a symbol you want to get the definition for, like a interface implemented by a class in the context, use the provided tool
 The final segment of your response should always be a valid mermaid diagram prefixed with a line containing  \`\`\`mermaid
-and suffixed with a line containing \`\`\`.
+and suffixed with a line containing \`\`\`. Nothing should follow the closing \`\`\` delimiter.
 Only ever include the \`\`\` delimiter in the two places mentioned above.
 `;
 
@@ -70,8 +70,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         "The user asked for a UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols " +
           "not defined in the current context. You should call it multiple times since you will likely need to get the definitions of multiple symbols." +
           " The types of class relationships in a UML diagram are: Inheritance, Composition, Aggregation, Association, Link, Dependency, Realization." +
-          " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram." +
-          " Finally return me 3 pieces of information that you would like to have learned to improve the diagram."
+          " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram."
       )
     );
   }
@@ -115,7 +114,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 const requestedContentType = 'text/plain';
                 toolCalls.push({
                     call: part,
-                    result: vscode.lm.invokeTool(tool.id, { parameters: JSON.parse(part.parameters), toolInvocationToken: request.toolInvocationToken, requestedContentTypes: [requestedContentType] }, token),
+                    result: vscode.lm.invokeTool(tool.id, { parameters: parameters, toolInvocationToken: request.toolInvocationToken, requestedContentTypes: [requestedContentType] }, token),
                     tool
                 });
             }
