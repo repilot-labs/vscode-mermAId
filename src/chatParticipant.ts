@@ -169,7 +169,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 return runWithFunctions();
             } else if (e instanceof Error && e.stack) {
                 logMessage(e.stack);
-                stream.markdown('failed to generate diagram, check logs for details.');
+                stream.markdown('Failed to generate diagram. Check output log for details.');
             }
         }
 
