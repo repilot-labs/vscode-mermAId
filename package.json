@@ -26,7 +26,45 @@
         "name": "mermAId",
         "description": "Work with diagrams in the chat",
         "isSticky": true,
-        "supportsToolReferences": true
+        "supportsToolReferences": true,
+        "commands": [
+          {
+            "name": "uml",
+            "description": "Generate a UML diagram"
+          }
+        ]
+      }
+    ],
+    "languageModelTools": [
+      {
+        "id": "mermAId_get_symbol_definition",
+        "tags": [
+          "editors",
+          "chat-tools-sample"
+        ],
+        "name": "get symbol definition",
+        "displayName": "Symbol Definition",
+        "modelDescription": "Get the definition of a symbol",
+        "icon": "$(files)",
+        "canBeInvokedManually": true,
+        "parametersSchema": {
+          "type": "object",
+          "properties": {
+            "symbols": {
+              "type": "string",
+              "description": "A list of symbols in the file to get the definition for.",
+              "default": "none"
+            },
+            "currentFilePath": {
+              "type": "string",
+              "description": "The path to the file where the symbols are found.",
+              "default": "none"
+            }
+          }
+        },
+        "supportedContentTypes": [
+          "text/plain"
+        ]
       }
     ]
   },

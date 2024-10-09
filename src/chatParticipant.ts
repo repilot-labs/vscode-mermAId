@@ -20,6 +20,7 @@ There is a selection of tools that let you retrieve extra context for generating
 If you aren't sure which tool is relevant, you can call multiple tools. You can call tools repeatedly to take actions or gather as much context as needed until you have completed the task fully. Don't give up unless you are sure the request cannot be fulfilled with the tools you have. 
 Don't make assumptions about the situation- gather context first, then perform the task or answer the question.
 Don't ask the user for confirmation to use tools, just use them.
+If you find a symbol you want to get the definition for, like a interface implemented by a class in the context, use the provided tool
 The final segment of your response should always be a valid mermaid diagram prefixed with a line containing  \`\`\`mermaid
 and suffixed with a line containing \`\`\`.
 Only ever include the \`\`\` delimiter in the two places mentioned above.
@@ -54,13 +55,26 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
     }
     messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
 
-    options.tools = vscode.lm.tools.map((tool): vscode.LanguageModelChatTool => {
-        return {
-            name: tool.id,
-            description: tool.description,
-            parametersSchema: tool.parametersSchema ?? {}
-        };
-    });
+  options.tools = vscode.lm.tools.map((tool): vscode.LanguageModelChatTool => {
+    return {
+      name: tool.id,
+      description: tool.description,
+      parametersSchema: tool.parametersSchema ?? {}
+    };
+  });
+
+  if (request.command === "uml") {
+    ``;
+    messages.push(
+      vscode.LanguageModelChatMessage.User(
+        "The user asked for a UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols " +
+          "not defined in the current context. You should call it multiple times since you will likely need to get the definitions of multiple symbols." +
+          " The types of class relationships in a UML diagram are: Inheritance, Composition, Aggregation, Association, Link, Dependency, Realization." +
+          " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram." +
+          " Finally return me 3 pieces of information that you would like to have learned to improve the diagram."
+      )
+    );
+  }
 
     let retries = 0;
 

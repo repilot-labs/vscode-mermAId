@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { registerChatParticipant } from './chatParticipant';
+import { registerChatTool } from "./additionalTools";
+
 
 const outputChannel = vscode.window.createOutputChannel('mermAId');
 export function logMessage(message: string) {
@@ -9,6 +11,7 @@ export function logMessage(message: string) {
 export function activate(context: vscode.ExtensionContext) {
     logMessage('Activating mermAId');
     registerChatParticipant(context);
+    registerChatTool(context);
 }
 
 export function deactivate() {
