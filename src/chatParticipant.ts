@@ -22,7 +22,7 @@ Don't make assumptions about the situation- gather context first, then perform t
 Don't ask the user for confirmation to use tools, just use them.
 If you find a symbol you want to get the definition for, like a interface implemented by a class in the context, use the provided tool
 The final segment of your response should always be a valid mermaid diagram prefixed with a line containing  \`\`\`mermaid
-and suffixed with a line containing \`\`\`.
+and suffixed with a line containing \`\`\`. Nothing should follow the closing \`\`\` delimiter.
 Only ever include the \`\`\` delimiter in the two places mentioned above.
 `;
 
@@ -115,7 +115,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 const requestedContentType = 'text/plain';
                 toolCalls.push({
                     call: part,
-                    result: vscode.lm.invokeTool(tool.id, { parameters: JSON.parse(part.parameters), toolInvocationToken: request.toolInvocationToken, requestedContentTypes: [requestedContentType] }, token),
+                    result: vscode.lm.invokeTool(tool.id, { parameters: parameters, toolInvocationToken: request.toolInvocationToken, requestedContentTypes: [requestedContentType] }, token),
                     tool
                 });
             }
