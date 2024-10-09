@@ -1,4 +1,7 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { DiagramDocument } from './diagramDocument';
 import { getHistoryMessages, getContextMessage } from './chatHelpers';
 import { logMessage } from './extension';
@@ -70,7 +73,6 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         for await (const part of response.stream) {
             if (part instanceof vscode.LanguageModelChatResponseTextPart) {
                 if (!isMermaidDiagramStreamingIn && part.value.includes('```')) {
-                    stream.progress('Validating mermaid diagram');
                     isMermaidDiagramStreamingIn = true;
                 }
 
@@ -127,11 +129,22 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         isMermaidDiagramStreamingIn = false;
 
         // Validate
-        const mermaid = (await import('mermaid')).default;
         try {
-            const trimmedDiagram = mermaidDiagram.replace(/```mermaid/, '').replace(/```/, '').trim();
-            const diagramType = await mermaid.parse(trimmedDiagram);
-            stream.progress(`Generating ${diagramType.diagramType} diagram`);
+            stream.progress('Validating mermaid diagram');
+            const tmpDir = fs.mkdtempSync(os.tmpdir());
+            logMessage(tmpDir);
+
+            // Write the diagram to a file
+            fs.writeFileSync(path.join(tmpDir, 'diagram.md'), mermaidDiagram);
+            const mermaidCLIModule = await import('@mermaid-js/mermaid-cli');
+            await mermaidCLIModule.run(
+                `${tmpDir}/diagram.md`,     // input
+                `${tmpDir}/diagram.svg`,    // output
+                {
+                    outputFormat: 'svg',
+                }
+            );
+
             stream.markdown(mermaidDiagram);
             await diagramManager.setContent(mermaidDiagram);
         } catch (e: any) {
@@ -139,6 +152,9 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             stream.markdown('Please try again.');
             // log
             logMessage(`ERR: ${e?.message ?? e}`);
+            if (e instanceof Error && e.stack) {
+                logMessage(e.stack);
+            }
         }
     };
 
