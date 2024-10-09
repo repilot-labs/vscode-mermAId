@@ -62,6 +62,8 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         };
     });
 
+    let retries = 0;
+
     const runWithFunctions = async (): Promise<void> => {
         const toolCalls: IToolCall[] = [];
 
@@ -112,7 +114,6 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 for (const toolCall of toolCalls) {
                     // NOTE that the result of calling a function is a special content type of a USER-message
                     const message = vscode.LanguageModelChatMessage.User('');
-
                     message.content2 = [new vscode.LanguageModelChatMessageToolResultPart(toolCall.call.toolCallId, (await toolCall.result)['text/plain']!)];
                     messages.push(message);
                 }
@@ -129,14 +130,14 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         isMermaidDiagramStreamingIn = false;
 
         // Validate
+        stream.progress('Validating mermaid diagram');
+        const tmpDir = fs.mkdtempSync(os.tmpdir());
+        logMessage(tmpDir);
+        
+        // Write the diagram to a file
+        fs.writeFileSync(path.join(tmpDir, 'diagram.md'), mermaidDiagram);
+        const mermaidCLIModule = await import('@mermaid-js/mermaid-cli');
         try {
-            stream.progress('Validating mermaid diagram');
-            const tmpDir = fs.mkdtempSync(os.tmpdir());
-            logMessage(tmpDir);
-
-            // Write the diagram to a file
-            fs.writeFileSync(path.join(tmpDir, 'diagram.md'), mermaidDiagram);
-            const mermaidCLIModule = await import('@mermaid-js/mermaid-cli');
             await mermaidCLIModule.run(
                 `${tmpDir}/diagram.md`,     // input
                 `${tmpDir}/diagram.svg`,    // output
@@ -145,17 +146,21 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 }
             );
 
-            stream.markdown(mermaidDiagram);
-            await diagramManager.setContent(mermaidDiagram);
         } catch (e: any) {
-            // TODO: Loop back to fix the diagram
-            stream.markdown('Please try again.');
+            stream.progress('Attempting to fix validation errors');
             // log
             logMessage(`ERR: ${e?.message ?? e}`);
-            if (e instanceof Error && e.stack) {
+            if (retries++ < 2){
+                messages.push(vscode.LanguageModelChatMessage.User(`The diagram had a validation error: ${e?.message ?? e}. Please try to fix it`));
+                return runWithFunctions();
+            } else if (e instanceof Error && e.stack) {
                 logMessage(e.stack);
+                stream.markdown('failed to generate diagram, check logs for details.');
             }
         }
+
+        stream.markdown(mermaidDiagram);
+        await diagramManager.setContent(mermaidDiagram);
     };
 
     await runWithFunctions();
