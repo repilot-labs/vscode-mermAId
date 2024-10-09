@@ -44,20 +44,23 @@
         ],
         "name": "get symbol definition",
         "displayName": "Symbol Definition",
-        "modelDescription": "Get the definition of a symbol",
+        "modelDescription": "Given a file path string and a list of symbols, this model returns the definitions of the specified symbols. For example, if the file 'x.py' is provided and the symbol 'abc' is requested, the model will find 'abc' in 'x.py' and return its definition from the file where it is actually defined, such as 'y.py'.",
         "icon": "$(files)",
         "canBeInvokedManually": true,
         "parametersSchema": {
           "type": "object",
           "properties": {
             "symbols": {
-              "type": "string",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
               "description": "A list of symbols in the file to get the definition for.",
-              "default": "none"
+              "default": []
             },
-            "currentFilePath": {
+            "fileString": {
               "type": "string",
-              "description": "The path to the file where the symbols are found.",
+              "description": "The path to the file represented as a string where you are finding these symbols you want to get the definition for. This means it should be in the format of a file system path (fspath). Example: '/path/to/your/file.js",
               "default": "none"
             }
           }

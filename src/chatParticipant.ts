@@ -73,6 +73,14 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
           " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram."
       )
     );
+    const doc = vscode.window.activeTextEditor?.document;
+    
+    if (doc) {
+        messages.push(vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`));
+    } else {
+        messages.push(vscode.LanguageModelChatMessage.User(`The user does not have any files open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`));
+    }
+      
   }
 
     let retries = 0;
@@ -176,6 +184,8 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         if (mermaidDiagram !== '') {
             stream.markdown(mermaidDiagram);
             await diagramDocument.setContent(mermaidDiagram);
+        } else {
+            stream.progress('failed to generate diagram, check logs for details.');
         }
     };
 
