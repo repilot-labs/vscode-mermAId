@@ -1,5 +1,12 @@
 import * as vscode from 'vscode';
 
+export interface IToolCall {
+    tool: vscode.LanguageModelToolDescription;
+    call: vscode.LanguageModelToolCallPart;
+    result: Thenable<vscode.LanguageModelToolResult>;
+}
+
+
 export async function getContextMessage(references: ReadonlyArray<vscode.ChatPromptReference>): Promise<string> {
     const contextParts = (await Promise.all(references.map(async ref => {
         if (ref.value instanceof vscode.Uri) {

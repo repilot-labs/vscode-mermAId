@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { DiagramDocument } from './diagramDocument';
-import { getHistoryMessages, getContextMessage } from './chatHelpers';
+import { getHistoryMessages, getContextMessage, IToolCall } from './chatHelpers';
 import { logMessage } from './extension';
 import { Diagram } from './diagram';
 import { DiagramEditorPanel } from './diagramEditorPanel';
@@ -25,12 +25,6 @@ The final segment of your response should always be a valid mermaid diagram pref
 and suffixed with a line containing \`\`\`. Nothing should follow the closing \`\`\` delimiter.
 Only ever include the \`\`\` delimiter in the two places mentioned above.
 `;
-
-interface IToolCall {
-    tool: vscode.LanguageModelToolDescription;
-    call: vscode.LanguageModelToolCallPart;
-    result: Thenable<vscode.LanguageModelToolResult>;
-}
 
 async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
     const models = await vscode.lm.selectChatModels({
@@ -59,6 +53,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             parametersSchema: tool.parametersSchema ?? {}
         };
     });
+    logMessage(`Available tools: ${options.tools.map(tool => tool.name).join(', ')}`);
     if (request.command === "uml") {
         ``;
         messages.push(
@@ -150,9 +145,9 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         stream.progress('Validating mermaid diagram');
         const diagram = new Diagram(mermaidDiagram);
 
-        const error = await diagram.validate();
+        const result = await diagram.generateWithValidation();
 
-        if (error) {
+        if (!result.success) {
             if (retries++<1) {
                 addNestingContext(messages);
             }
@@ -160,11 +155,11 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 if (retries++ < 2) {
                     stream.progress('Attempting to fix validation errors');
                     // we might be able to reset the messages to this message only
-                    messages.push(vscode.LanguageModelChatMessage.User(`Please fix this error to make the diagram render correctly: ${error.message}. The diagram is below:\n${mermaidDiagram}`));
+                    messages.push(vscode.LanguageModelChatMessage.User(`Please fix this error to make the diagram render correctly: ${result.message}. The diagram is below:\n${mermaidDiagram}`));
                     return runWithFunctions();
                 } else {
-                    if (error.stack) {
-                        logMessage(error.stack);
+                    if (result.stack) {
+                        logMessage(result.stack);
                     }
                     stream.markdown('Failed to generate diagram from the mermaid content. Check output log for details.');
                     stream.markdown(mermaidDiagram);
@@ -173,7 +168,8 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         } else {
             DiagramEditorPanel.createOrShow(diagram);
         }
-    };
+    }; // done with runWithFunctions
+
     await runWithFunctions();
 }
 
