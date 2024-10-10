@@ -26,69 +26,61 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
     const errors: string[] = [];
     let finalMessageString = '';
     console.log("mermAId_get_symbol_definition invoked with symbols", params.symbols.toString(), "in file: ", currentFilePath);
-    
-    // get file text
-    let document;
-    try {
-      document = await vscode.workspace.openTextDocument(currentFilePath);
-    } catch (e) {
-      errors.push(`Error opening file: ${e}`);
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        throw new Error("No active editor found");
-      }
-      document = await vscode.workspace.openTextDocument(editor.document.uri);
-    }
-    const text = document.getText();
+        
     
     for (const symbol of params.symbols) {
+      let document; // document where symbol is located
+      let position; // position of symbol in document
       try {
-        
-        const position = text.indexOf(symbol);
-
+        // try with provided file first
+        document = await vscode.workspace.openTextDocument(currentFilePath);
+        // if we have a document, get the text and position of the symbol
+        let text = document.getText();
+        position = text.indexOf(symbol);
         if (position === -1) {
-          errors.push(
-            `Symbol "${symbol}" not found in document ${currentFilePath}`
-          );
+          throw new Error("Symbol not found in file");
         }
-        
-        const uri = document.uri;
-        const p2: vscode.Position = document.positionAt(position);
-        
-        const definitions: vscode.Location | vscode.LocationLink[] =
-        await vscode.commands.executeCommand<
-        vscode.Location | vscode.LocationLink[]
-        >("vscode.executeDefinitionProvider", uri, p2);
-
-
-        const symbols = await vscode.commands.executeCommand<
-          vscode.DocumentSymbol[]
-        >(
-          "vscode.executeDocumentSymbolProvider",
-          uri
-        );
-        const fileSymbolMatch = symbols.find(s => s.name === symbol);
-        if (fileSymbolMatch) {
-          finalMessageString = finalMessageString + `Symbol "${symbol}" has children: ${fileSymbolMatch.children.map(c => c.name).join(", ")}\n`;
-        }
-        
-        if (Array.isArray(definitions)) {
-          for (const definition of definitions) {
-            const document = await vscode.workspace.openTextDocument(
-              definition.targetUri
+      } catch {
+        // if that fails, try to find a file with it in the workspace
+        const candidateDocument = await getReferenceFile(symbol);
+          if (!candidateDocument) {
+            errors.push(
+              `Symbol "${symbol}" not found in workspace`
             );
-            if (!resultMap.has(definition.targetUri.toString())) {
-              resultMap.set(document.uri.fsPath, document.getText());
-            }
+            continue;
           }
-        } else if (definitions instanceof vscode.Location) {
+          try {
+            document = candidateDocument;
+            let text = document.getText();
+            position = text.indexOf(symbol);
+          } 
+          catch {
+            continue;
+          }
+      }
+
+      const p2: vscode.Position = document.positionAt(position);
+
+      // get the definition(s) of the symbol
+      const definitions: vscode.Location | vscode.LocationLink[] =
+      await vscode.commands.executeCommand<
+      vscode.Location | vscode.LocationLink[]
+      >("vscode.executeDefinitionProvider",  document.uri, p2);
+
+      if (Array.isArray(definitions)) {
+        for (const definition of definitions) {
           const document = await vscode.workspace.openTextDocument(
-            definitions.uri
+            definition.targetUri
           );
-          resultMap.set(document.uri.fsPath, document.getText());
+          if (!resultMap.has(definition.targetUri.toString())) {
+            resultMap.set(document.uri.fsPath, document.getText());
+          }
         }
-      } catch (e) {
-        errors.push(`Error opening file: ${e}`);
+      } else if (definitions instanceof vscode.Location) {
+        const document = await vscode.workspace.openTextDocument(
+          definitions.uri
+        );
+        resultMap.set(document.uri.fsPath, document.getText());
       }
     }
     for (const [key, value] of resultMap) {
@@ -114,3 +106,24 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
     };
   }
 }
+
+async function getReferenceFile(symbol: string): Promise<vscode.TextDocument | undefined> {
+    try {
+      const refs = await vscode.commands.executeCommand<
+        vscode.SymbolInformation[]
+      >("vscode.executeWorkspaceSymbolProvider", symbol);
+      console.log("ref", refs);
+      if (refs.length === 0) {
+       return undefined;
+      }
+      const ref: vscode.SymbolInformation = refs[0];
+      if (ref) {
+        return await vscode.workspace.openTextDocument(ref.location.uri);
+      }
+    }
+    catch (e) {
+      console.log("error", e);
+    }
+    return undefined;
+}
+  
