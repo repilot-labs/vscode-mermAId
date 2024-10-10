@@ -213,4 +213,5 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             +
             "This Mermaid diagram is incomplete. You should have this defined like:" + `Supermarket "1" --> "*" CashRegister : has`
             ));
-    };
+        };
+    }
