@@ -60,7 +60,7 @@
             },
             "fileString": {
               "type": "string",
-              "description": "The path to the file represented as a string where you are finding these symbols you want to get the definition for. This means it should be in the format of a file system path (fspath). Example: '/path/to/your/file.js",
+              "description": "The path to the file represented as a string where you are finding these symbols you want to get the definition for. Or undefined if the location of the symbol is unknown.",
               "default": "none"
             }
           }
