@@ -3,6 +3,7 @@ import { DiagramDocument } from './diagramDocument';
 import { getHistoryMessages, getContextMessage } from './chatHelpers';
 import { logMessage } from './extension';
 import { Diagram } from './diagram';
+import { DiagramEditorPanel } from './diagramEditorPanel';
 
 export function registerChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = chatRequestHandler;
@@ -10,6 +11,7 @@ export function registerChatParticipant(context: vscode.ExtensionContext) {
     const participant = vscode.chat.createChatParticipant('copilot-diagram.mermAId', handler);
     participant.iconPath = new vscode.ThemeIcon('pie-chart');
     context.subscriptions.push(participant);
+    DiagramEditorPanel.extensionUri = context.extensionUri;
 }
 
 const llmInstructions = `
@@ -29,8 +31,6 @@ interface IToolCall {
     call: vscode.LanguageModelToolCallPart;
     result: Thenable<vscode.LanguageModelToolResult>;
 }
-
-const diagramDocument = new DiagramDocument();
 
 async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vscode.ChatContext, stream: vscode.ChatResponseStream, token: vscode.CancellationToken) {
     const models = await vscode.lm.selectChatModels({
@@ -61,25 +61,25 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         };
     });
 
-  if (request.command === "uml") {
-    ``;
-    messages.push(
-      vscode.LanguageModelChatMessage.User(
-        "The user asked for a UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols " +
-          "not defined in the current context. You should call it multiple times since you will likely need to get the definitions of multiple symbols." +
-          " The types of class relationships in a UML diagram are: Inheritance, Composition, Aggregation, Association, Link, Dependency, Realization." +
-          " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram."
-      )
-    );
-    const doc = vscode.window.activeTextEditor?.document;
-    
-    if (doc) {
-        messages.push(vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`));
-    } else {
-        messages.push(vscode.LanguageModelChatMessage.User(`The user does not have any files open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`));
+    if (request.command === "uml") {
+        ``;
+        messages.push(
+            vscode.LanguageModelChatMessage.User(
+                "The user asked for a UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols " +
+                "not defined in the current context. You should call it multiple times since you will likely need to get the definitions of multiple symbols." +
+                " The types of class relationships in a UML diagram are: Inheritance, Composition, Aggregation, Association, Link, Dependency, Realization." +
+                " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram."
+            )
+        );
+        const doc = vscode.window.activeTextEditor?.document;
+
+        if (doc) {
+            messages.push(vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`));
+        } else {
+            messages.push(vscode.LanguageModelChatMessage.User(`The user does not have any files open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`));
+        }
+
     }
-      
-  }
 
     let retries = 0;
 
@@ -170,7 +170,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 }
             }
         } else {
-            await diagramDocument.update(diagram);
+            DiagramEditorPanel.createOrShow(diagram);
         }
     };
 
