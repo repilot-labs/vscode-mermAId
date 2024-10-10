@@ -24,6 +24,7 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
     const currentFilePath = params.fileString;
     const resultMap: Map<string, string> = new Map();
     const errors: string[] = [];
+    let finalMessageString = '';
     console.log("mermAId_get_symbol_definition invoked with symbols", params.symbols.toString(), "in file: ", currentFilePath);
     
     // get file text
@@ -58,6 +59,18 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
         await vscode.commands.executeCommand<
         vscode.Location | vscode.LocationLink[]
         >("vscode.executeDefinitionProvider", uri, p2);
+
+
+        const symbols = await vscode.commands.executeCommand<
+          vscode.DocumentSymbol[]
+        >(
+          "vscode.executeDocumentSymbolProvider",
+          uri
+        );
+        const fileSymbolMatch = symbols.find(s => s.name === symbol);
+        if (fileSymbolMatch) {
+          finalMessageString = finalMessageString + `Symbol "${symbol}" has children: ${fileSymbolMatch.children.map(c => c.name).join(", ")}\n`;
+        }
         
         if (Array.isArray(definitions)) {
           for (const definition of definitions) {
@@ -78,7 +91,6 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
         errors.push(`Error opening file: ${e}`);
       }
     }
-    let finalMessageString = '';
     for (const [key, value] of resultMap) {
       finalMessageString += `File: ${key}\nContents: ${value}\n\n`;
     }

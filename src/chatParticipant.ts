@@ -52,7 +52,6 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         messages.push(vscode.LanguageModelChatMessage.User(await getContextMessage(request.references)));
     }
     messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
-
     options.tools = vscode.lm.tools.map((tool): vscode.LanguageModelChatTool => {
         return {
             name: tool.id,
@@ -60,26 +59,25 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             parametersSchema: tool.parametersSchema ?? {}
         };
     });
-
     if (request.command === "uml") {
         ``;
         messages.push(
             vscode.LanguageModelChatMessage.User(
                 "The user asked for a UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols " +
                 "not defined in the current context. You should call it multiple times since you will likely need to get the definitions of multiple symbols." +
-                " The types of class relationships in a UML diagram are: Inheritance, Composition, Aggregation, Association, Link, Dependency, Realization." +
+                // " The types of class relationships in a UML diagram are: Inheritance, Composition, Aggregation, Association, Link, Dependency, Realization." +
                 " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram."
             )
         );
         const doc = vscode.window.activeTextEditor?.document;
-
         if (doc) {
             messages.push(vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`));
         } else {
             messages.push(vscode.LanguageModelChatMessage.User(`The user does not have any files open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`));
         }
-
-    }
+        messages.push(vscode.LanguageModelChatMessage.User('Remember that all class associations/should be defined! If one class has an instance of another it should be connected it it in the UML diagram.'));
+      
+  }
 
     let retries = 0;
 
@@ -155,6 +153,9 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         const error = await diagram.validate();
 
         if (error) {
+            if (retries++<1) {
+                addNestingContext(messages);
+            }
             if (retries++ < 2) {
                 if (retries++ < 2) {
                     stream.progress('Attempting to fix validation errors');
@@ -174,5 +175,42 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         }
     };
 
-    await runWithFunctions();
-};
+
+    function addNestingContext(messages: vscode.LanguageModelChatMessage[]) {
+        messages.push(vscode.LanguageModelChatMessage.Assistant("Remember when creating the UML diagram in Mermaid, classes are represented as flat structures,"+
+                    " and Mermaid does not support nested class definitions. Instead, each class must be defined separately, and relationships between them must be explicitly stated." +
+                    "Use association to connect the main class to the nested class, using cardinality to denote relationships (e.g., one-to-many)." + 
+                    " \n example of correct syntax: \n" +
+                `
+                classDiagram
+                    class House {
+                        string address
+                        int rooms
+                        Kitchen kitchen
+                    }
+                                    
+                    class Kitchen {
+                        string appliances
+                        int size
+                    }
+                                    
+                    House "1" --> "1" Kitchen : kitchen
+                `));
+    }
+
+    function specifyAssociations(messages: vscode.LanguageModelChatMessage[]) {
+        messages.push(vscode.LanguageModelChatMessage.Assistant("Remember that all class associations/should be defined. In this example:"
+            +
+            `
+            classDiagram
+            class Supermarket {
+                +Registers: CashRegister[]
+            }
+            class CashRegister {
+                +process(product: Product)
+            }
+            `
+            +
+            "This Mermaid diagram is incomplete. You should have this defined like:" + `Supermarket "1" --> "*" CashRegister : has`
+            ));
+    };
