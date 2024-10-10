@@ -1,0 +1,21 @@
+.diagramContainer .toolbar {
+    position: relative;
+    z-index: 3;
+    display: flex;
+}
+
+.toolbar .button {
+    margin: 2px;
+}
+
+#mermaid-diagram {
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+}
+  
+#drag-handle {
+    cursor: move;
+    z-index: 2;
+ }
+
