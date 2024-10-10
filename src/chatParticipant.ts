@@ -174,6 +174,8 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             DiagramEditorPanel.createOrShow(diagram);
         }
     };
+    await runWithFunctions();
+}
 
 
     function addNestingContext(messages: vscode.LanguageModelChatMessage[]) {
@@ -213,5 +215,5 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             +
             "This Mermaid diagram is incomplete. You should have this defined like:" + `Supermarket "1" --> "*" CashRegister : has`
             ));
-        };
     }
+    
