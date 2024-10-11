@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { logMessage } from './extension';
-import { IToolCall } from './chatHelpers';
+import { IToolCall } from './chat/chatHelpers';
 import { Diagram } from './diagram';
 
 
@@ -61,7 +61,7 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
     if (!doc) {
         return;
     }
-    
+
     const models = await vscode.lm.selectChatModels();
     if (!models.length) {
         logMessage('FAIL! No LLM model found');
@@ -84,7 +84,7 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
         }),
     };
     logMessage(`Available tools: ${options.tools?.map(tool => tool.name).join(', ')}`);
-    
+
 
     const messages = [
         vscode.LanguageModelChatMessage.Assistant(llmInstructions),
@@ -118,11 +118,12 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
                 const requestedContentType = 'text/plain';
                 toolCalls.push({
                     call: part,
-                    result: vscode.lm.invokeTool(toolUsed.id, 
-                        { 
-                            parameters, 
-                            toolInvocationToken: undefined, 
-                            requestedContentTypes: [requestedContentType] }, cancellationToken),
+                    result: vscode.lm.invokeTool(toolUsed.id,
+                        {
+                            parameters,
+                            toolInvocationToken: undefined,
+                            requestedContentTypes: [requestedContentType]
+                        }, cancellationToken),
                     tool: toolUsed
                 });
             }
@@ -185,7 +186,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 this.diagram = nextDiagram;
                 this._setOutlineDiagram();
             }
-            
+
         } catch (e) {
             logMessage(`Error getting outline diagram from LLM: ${e}`);
         }

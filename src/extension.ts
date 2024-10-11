@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { registerChatParticipant } from './chatParticipant';
-import { registerChatTool } from "./additionalTools";
+import { registerChatParticipant } from './chat/chatParticipant';
+import { registerChatTool } from "./chat/additionalTools";
 import { registerOutlineView } from './outlineView';
 
 const outputChannel = vscode.window.createOutputChannel('mermAId');
