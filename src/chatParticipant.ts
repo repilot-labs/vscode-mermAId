@@ -64,12 +64,25 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 " Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram."
             )
         );
+        let includedFiles: boolean = false;
+        if (request.references.length > 0) {
+            for (const reference of request.references) {
+                const v = reference.value;
+                if ( v instanceof vscode.Uri) {
+                    const doc = await vscode.workspace.openTextDocument(v);
+                    messages.push(vscode.LanguageModelChatMessage.User(`The file ${v.fsPath} is attached by the user as context. It has the following contents: ${doc.getText()}`));
+                    includedFiles = true;
+                }
+            }
+        }
+        // TODO: if the user includes a file as reference - should we get the currently open file
         const doc = vscode.window.activeTextEditor?.document;
         if (doc) {
             messages.push(vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`));
         } else {
             messages.push(vscode.LanguageModelChatMessage.User(`The user does not have any files open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`));
         }
+        
         messages.push(vscode.LanguageModelChatMessage.User('Remember that all class associations/should be defined! If one class has an instance of another it should be connected it it in the UML diagram.'));
       
   }
