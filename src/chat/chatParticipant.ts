@@ -139,20 +139,18 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         } else {
             DiagramEditorPanel.createOrShow(diagram);
 
-            // create file in temp folder
+            // add button to show markdown file for the diagram
             if (result.diagramPath) {
                 const diagramFileUri = vscode.Uri.file(result.diagramPath);
-                // await vscode.workspace.fs.writeFile(diagramFileUri, Buffer.from(mermaidDiagram));
                 const openNewFileCommand: vscode.Command = {
                     command: 'vscode.open',
                     title: vscode.l10n.t('See mermaid diagram markdown'),
                     arguments: [diagramFileUri]
                 };
-                //const openNewFileArgs = { uri: diagramFileUri };
                 stream.button(openNewFileCommand);
             }
         }
-    }; // done with runWithFunctions
+    }; 
 
     await runWithFunctions();
 }
