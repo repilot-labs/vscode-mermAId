@@ -4,7 +4,8 @@
     display: flex;
 }
 
-.toolbar button {
+.toolbar .button {
+    margin: 2px;
     min-width: 18px;
 }
 
