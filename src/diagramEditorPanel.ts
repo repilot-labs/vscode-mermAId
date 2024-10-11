@@ -63,7 +63,7 @@ export class DiagramEditorPanel {
 						break;
 					case 'mermaid-source':
 						const document = await vscode.workspace.openTextDocument({ language: 'markdown', content: this._diagram.content });
-            			await vscode.window.showTextDocument(document);
+						await vscode.window.showTextDocument(document);
 						break;
 				}
 			},
@@ -133,26 +133,23 @@ export class DiagramEditorPanel {
 					<div class="toolbar">
 						<span class="button">
 							<button id="zoom-in">
-								+
-								<!--div class=codicon-zoom-in></div-->
+								<div class="icon"><i class="codicon codicon-zoom-in"></i></div>
 							</button>
 						</span>
 						<span class="button">
 							<button id="zoom-out">
-								-
-								<!--div class=codicon-zoom-out></div-->
+								<div class="icon"><i class="codicon codicon-zoom-out"></i></div>
 							</button>
 						</span>
+						<span class='divider'></span>
 						<span class="button">
 							<button id="save-svg">
-								save SVG
-								<!--div class=codicon-zoom-out></div-->
+								<div class="icon"><i class="codicon codicon-save-as"></i>Save SVG</div>
 							</button>
 						</span>
 						<span class="button">
 							<button id="mermaid-source">
-								view mermaid source
-								<!--div class=codicon-zoom-out></div-->
+								<div class="icon"><i class="codicon codicon-markdown"></i>View Source</div>
 							</button>
 						</span>
 					</div>
@@ -174,7 +171,7 @@ function getWebviewOptions(): vscode.WebviewOptions {
 		// Enable javascript in the webview
 		enableScripts: true,
 
-		// And restrict the webview to only loading content from our extension's `media` directory.
+		// And restrict the webview to only loading content from our extension's `media` directory and the imported codicons.
 		localResourceRoots: [
 			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media'),
 			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist')
