@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import { logMessage } from './extension';
 import { IToolCall } from './chat/chatHelpers';
 import { Diagram } from './diagram';
@@ -30,6 +28,8 @@ Only ever include the \`\`\` delimiter in the two places mentioned above.
 Do not include any other text before or after the diagram, only include the diagram.
 `;
 
+let outlineViewCancellationTokenSource: vscode.CancellationTokenSource | undefined;
+
 export function registerOutlineView(context: vscode.ExtensionContext) {
     const outlineView = new OutlineViewProvider(context);
     context.subscriptions.push(
@@ -39,23 +39,20 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
             { webviewOptions: { retainContextWhenHidden: true } }
         )
     );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilot-mermAId-diagram.refresh-outline', () => {
+            // Cancel the previous token if it exists
+            if (outlineViewCancellationTokenSource) {
+                outlineViewCancellationTokenSource.cancel();
+            }
+            outlineViewCancellationTokenSource = new vscode.CancellationTokenSource();
+            outlineView.generateOutlineDiagram(outlineViewCancellationTokenSource.token);
+        })
+    );
 
     // TODO: update webview when underlying diagram changes.
     // vscode.workspace.createFileSystemWatcher
 }
-
-// async function getActiveDocumentSymbols() {
-//     const activeTextEditor = vscode.window.activeTextEditor;
-//     if (activeTextEditor) {
-//         const symbols =
-//             await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
-//                 'vscode.executeDocumentSymbolProvider',
-//                 activeTextEditor.document.uri
-//             );
-//         logMessage(`Got ${symbols?.length} symbols for document ${activeTextEditor.document.uri}`);
-//         return symbols;
-//     }
-// }
 
 export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContext, cancellationToken: vscode.CancellationToken): Promise<Diagram | undefined> {
     const doc = vscode.window.activeTextEditor?.document;
@@ -176,11 +173,11 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private diagram?: Diagram;
 
-    private async _generateOutlineDiagram() {
-        const cancellationTokenSource = new vscode.CancellationTokenSource(); // TODO: Use me
+    public async generateOutlineDiagram(cancellationToken: vscode.CancellationToken) {
+        await this.setLoadingMessage();
         try {
             logMessage('Generating outline diagram...');
-            const nextDiagram: Diagram | undefined = await promptLLMForOutlineDiagram(this.context, cancellationTokenSource.token);
+            const nextDiagram: Diagram | undefined = await promptLLMForOutlineDiagram(this.context, cancellationToken);
 
             if (nextDiagram) {
                 this.diagram = nextDiagram;
@@ -189,11 +186,31 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 
         } catch (e) {
             logMessage(`Error getting outline diagram from LLM: ${e}`);
+            this.setTryAgainMessage();
         }
+    }
+
+    private setLoadingMessage() {
+        if (!this._view) {
+            return;
+        }
+        this._view.webview.html = template('<p>Generating...</p>');
+    }
+
+    private setTryAgainMessage() {
+        if (!this._view) {
+            return;
+        }
+        this._view.webview.html = template('<p>Please try again.</p>');
     }
 
     private async _setOutlineDiagram() {
         if (!this._view) {
+            return;
+        }
+
+        if (!this.diagram) { 
+            this._view.webview.html = template('<p>Refresh to generate diagram</p>');
             return;
         }
 
@@ -217,7 +234,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             enableScripts: true,
         };
 
-        await this._generateOutlineDiagram();
+        // await vscode.commands.executeCommand('copilot-mermAId-diagram.refresh-outline');
         this._setOutlineDiagram();
     }
 

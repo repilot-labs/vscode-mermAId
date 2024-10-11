@@ -87,7 +87,22 @@
           "name": "Mermaid Outline"
         }
       ]
-    }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "copilot-mermAId-diagram.refresh-outline",
+          "when": "view == mermaid-outline-diagram",
+          "group": "navigation"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "copilot-mermAId-diagram.refresh-outline",
+        "title": "Refresh"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
