@@ -25,7 +25,8 @@ export class Diagram {
         return fs.readFileSync(this.outputFileName, 'utf8');
     }
 
-    async generateWithValidation(): Promise<{ success: boolean; message?: string; stack?: string }> {
+    async generateWithValidation(): Promise<{ success: boolean; message?: string; stack?: string, diagramPath?: string | undefined }> {
+        let diagramTempPath;
         if (!this._content.length) {
             return {
                 success: false,
@@ -42,7 +43,8 @@ export class Diagram {
             }
 
             // Write the diagram to a file
-            fs.writeFileSync(path.join(this.tempDir, 'diagram.md'), this.content);
+            diagramTempPath = path.join(this.tempDir, 'diagram.md');
+            fs.writeFileSync(diagramTempPath, this.content);
             const mermaidCLIModule = await import('@mermaid-js/mermaid-cli');
             await mermaidCLIModule.run(
                 `${this.tempDir}/diagram.md`,     // input
@@ -57,7 +59,7 @@ export class Diagram {
             return {
                 success: false,
                 message: e?.message ?? JSON.stringify(e),
-                stack: e.stack
+                stack: e.stack,
             };
         }
 
@@ -76,6 +78,7 @@ export class Diagram {
         this.validated = true;
         return {
             success: true,
+            diagramPath: diagramTempPath
         };
     }
 }

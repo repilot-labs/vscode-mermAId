@@ -138,6 +138,19 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             }
         } else {
             DiagramEditorPanel.createOrShow(diagram);
+
+            // create file in temp folder
+            if (result.diagramPath) {
+                const diagramFileUri = vscode.Uri.file(result.diagramPath);
+                // await vscode.workspace.fs.writeFile(diagramFileUri, Buffer.from(mermaidDiagram));
+                const openNewFileCommand: vscode.Command = {
+                    command: 'vscode.open',
+                    title: vscode.l10n.t('See mermaid diagram markdown'),
+                    arguments: [diagramFileUri]
+                };
+                //const openNewFileArgs = { uri: diagramFileUri };
+                stream.button(openNewFileCommand);
+            }
         }
     }; // done with runWithFunctions
 
@@ -183,3 +196,18 @@ function specifyAssociations(messages: vscode.LanguageModelChatMessage[]) {
         "This Mermaid diagram is incomplete. You should have this defined like:" + `Supermarket "1" --> "*" CashRegister : has`
     ));
 }
+
+    function relationshipsContext(messages: vscode.LanguageModelChatMessage[]) {
+        const relationships =`
+ <|-- Inheritance: Represents a "is-a" relationship where a subclass inherits from a superclass.
+*-- Composition: Represents a "whole-part" relationship where the part cannot exist without the whole.
+o-- Aggregation: Represents a "whole-part" relationship where the part can exist independently of the whole.
+--> Association: Represents a general relationship between classes.
+-- Link (Solid): Represents a connection or relationship between instances of classes.
+..> Dependency: Represents a "uses" relationship where one class depends on another.
+..|> Realization: Represents an implementation relationship where a class implements an interface.
+.. Link (Dashed): Represents a weaker connection or relationship between instances of classes.
+`;
+    messages.push(vscode.LanguageModelChatMessage.Assistant(relationships));
+    }
+    

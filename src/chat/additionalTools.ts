@@ -72,7 +72,7 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
           const document = await vscode.workspace.openTextDocument(
             definition.targetUri
           );
-          if (!resultMap.has(definition.targetUri.toString())) {
+          if (definition.targetUri && !resultMap.has(definition.targetUri.toString())) {
             resultMap.set(document.uri.fsPath, document.getText());
           }
         }
@@ -102,7 +102,7 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
     token: vscode.CancellationToken
   ) {
     return {
-      invocationMessage: `Getting definition for "${options.parameters.symbols.toString()}"`,
+      invocationMessage: `Getting definition for "${options.parameters.symbols.join(', ')}"`,
     };
   }
 }
