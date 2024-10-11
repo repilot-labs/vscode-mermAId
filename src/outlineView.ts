@@ -215,7 +215,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         }
 
         try {
-            const svgContents = this.diagram?.asSvg;
+            const svgContents = this.diagram?.asSvg();
             if (!svgContents || !svgContents.length) {
                 this._view.webview.html = template('<p>Empty diagram</p>');
                 return;

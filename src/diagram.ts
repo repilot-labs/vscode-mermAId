@@ -16,7 +16,7 @@ export class Diagram {
 
     get content(): string { return this._content; }
 
-    get asSvg(): string {
+    asSvg(): string {
         if (!this.validated) {
             throw new Error('Must generate diagram with validation before accessing SVG');
         }

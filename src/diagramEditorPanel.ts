@@ -22,7 +22,7 @@ export class DiagramEditorPanel {
 		// If we already have a panel, show it.
 		if (DiagramEditorPanel.currentPanel) {
 			DiagramEditorPanel.currentPanel._panel.reveal(column);
-			DiagramEditorPanel.currentPanel._update(diagram.asSvg);
+			DiagramEditorPanel.currentPanel._update(diagram);
 			return;
 		}
 
@@ -34,11 +34,11 @@ export class DiagramEditorPanel {
 			getWebviewOptions(),
 		);
 
-		DiagramEditorPanel.currentPanel = new DiagramEditorPanel(panel);
-		DiagramEditorPanel.currentPanel._update(diagram.asSvg);
+		DiagramEditorPanel.currentPanel = new DiagramEditorPanel(panel, diagram);
+		DiagramEditorPanel.currentPanel._update();
 	}
 
-	private constructor(panel: vscode.WebviewPanel) {
+	private constructor(panel: vscode.WebviewPanel, private _diagram: Diagram) {
 		this._panel = panel;
 
 		// Listen for when the panel is disposed
@@ -73,6 +73,15 @@ export class DiagramEditorPanel {
 		}
 	}
 
+	private _update(diagram?: Diagram) {
+		if (diagram) {
+			this._diagram = diagram;
+		}
+		const webview = this._panel.webview;
+		this._panel.title = '@mermAId Diagram';
+		this._panel.webview.html = DiagramEditorPanel.getHtmlForWebview(webview, this._diagram.asSvg());
+	}
+
 	public static getHtmlForWebview(webview: vscode.Webview, svg: string) {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'main.js');
@@ -84,27 +93,25 @@ export class DiagramEditorPanel {
 		const styleResetPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'reset.css');
 		const stylesPathMainPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'vscode.css');
 		const stylesCustom = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'styles.css');
+		const codiconsPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css');
 
 		// Uri to load styles into webview
 		const stylesResetUri = webview.asWebviewUri(styleResetPath);
 		const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
 		const stylesCustomUri = webview.asWebviewUri(stylesCustom);
+		const codiconsUri = webview.asWebviewUri(codiconsPath);
 
 		return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
 
-				<!--
-					Use a content security policy to only allow loading images from https or from our extension directory,
-					and only allow scripts that have a specific nonce.
-				-->
-
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 				<link href="${stylesResetUri}" rel="stylesheet">
 				<link href="${stylesMainUri}" rel="stylesheet">
 				<link href="${stylesCustomUri}" rel="stylesheet">
+				<link href="${codiconsUri}" rel="stylesheet">
 
 				<title>mermAId diagram</title>
 			</head>
@@ -112,10 +119,16 @@ export class DiagramEditorPanel {
 				<div class="diagramContainer">
 					<div class="toolbar">
 						<span class="button">
-							<button id="zoom-in">+</button>
+							<button id="zoom-in">
+								+
+								<!--div class=codicon-zoom-in></div-->
+							</button>
 						</span>
 						<span class="button">
-							<button id="zoom-out">-</button>
+							<button id="zoom-out">
+								-
+								<!--div class=codicon-zoom-out></div-->
+							</button>
 						</span>
 					</div>
 					<div id=mermaid-diagram class="diagram">
@@ -129,12 +142,6 @@ export class DiagramEditorPanel {
 			</body>
 			</html>`;
 	}
-
-	private _update(svg: string) {
-		const webview = this._panel.webview;
-		this._panel.title = '@mermAId Diagram';
-		this._panel.webview.html = DiagramEditorPanel.getHtmlForWebview(webview, svg);
-	}
 }
 
 function getWebviewOptions(): vscode.WebviewOptions {
@@ -143,6 +150,9 @@ function getWebviewOptions(): vscode.WebviewOptions {
 		enableScripts: true,
 
 		// And restrict the webview to only loading content from our extension's `media` directory.
-		localResourceRoots: [vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media')]
+		localResourceRoots: [
+			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media'),
+			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist')
+		]
 	};
 }
