@@ -73,13 +73,7 @@ export class DiagramEditorPanel {
 		}
 	}
 
-	private _update(svg: string) {
-		const webview = this._panel.webview;
-		this._panel.title = '@mermAId Diagram';
-		this._panel.webview.html = this._getHtmlForWebview(webview, svg);
-	}
-
-	private _getHtmlForWebview(webview: vscode.Webview, svg: string) {
+	public static getHtmlForWebview(webview: vscode.Webview, svg: string) {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'main.js');
 
@@ -134,6 +128,12 @@ export class DiagramEditorPanel {
 				<script src="${scriptUri}"></script>
 			</body>
 			</html>`;
+	}
+
+	private _update(svg: string) {
+		const webview = this._panel.webview;
+		this._panel.title = '@mermAId Diagram';
+		this._panel.webview.html = DiagramEditorPanel.getHtmlForWebview(webview, svg);
 	}
 }
 

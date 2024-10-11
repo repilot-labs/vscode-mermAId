@@ -4,6 +4,7 @@ import * as path from 'path';
 import { logMessage } from './extension';
 import { IToolCall } from './chat/chatHelpers';
 import { Diagram } from './diagram';
+import { DiagramEditorPanel } from './diagramEditorPanel';
 
 
 const template = (innerContent: string) => `
@@ -155,15 +156,14 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
         const nextDiagram = new Diagram(mermaidDiagram);
         const result = await nextDiagram.generateWithValidation();
         if (!result.success) {
+            logMessage(`Candidate failed failidation (retries=${retries}): ${result.message}`);
             if (retries++ < 2) {
-                logMessage(`Candidate failed validation: ${result.message}`);
+                logMessage(`Retrying...`);
                 messages.push(vscode.LanguageModelChatMessage.User(`Please fix this error to make the diagram render correctly: ${result.message}. The diagram is below:\n${mermaidDiagram}`));
                 return runWithTools();
 
             }
         }
-
-
         return nextDiagram;
     };
 
@@ -203,7 +203,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 this._view.webview.html = template('<p>Empty diagram</p>');
                 return;
             }
-            this._view.webview.html = template(svgContents);
+            this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, svgContents);
         } catch (e) {
             this._view.webview.html = template('<p>No diagram</p>');
             return;
