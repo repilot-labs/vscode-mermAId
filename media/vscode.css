@@ -45,14 +45,17 @@ code {
 }
 
 button {
-	border: none;
-	padding: var(--input-padding-vertical) var(--input-padding-horizontal);
+	box-sizing: border-box;
+	display: flex;
 	width: 100%;
+	padding: 4px;
+	border-radius: 2px;
 	text-align: center;
-	outline: 1px solid transparent;
-	outline-offset: 2px !important;
-	color: var(--vscode-button-foreground);
-	background: var(--vscode-button-background);
+	cursor: pointer;
+	justify-content: center;
+	align-items: center;
+	border: 1px solid var(--vscode-button-border, transparent);
+	line-height: 18px;
 }
 
 button:hover {

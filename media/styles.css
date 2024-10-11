@@ -4,8 +4,8 @@
     display: flex;
 }
 
-.toolbar .button {
-    margin: 2px;
+.toolbar button {
+    min-width: 18px;
 }
 
 #mermaid-diagram {
