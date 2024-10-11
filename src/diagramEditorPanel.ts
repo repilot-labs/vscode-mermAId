@@ -64,6 +64,19 @@ export class DiagramEditorPanel {
 					case 'mermaid-source':
 						const document = await vscode.workspace.openTextDocument({ language: 'markdown', content: this._diagram.content });
 						await vscode.window.showTextDocument(document);
+
+						const extensions = vscode.extensions.all.filter(extension => extension.packageJSON.keywords && extension.packageJSON.keywords.includes('mermaid'));
+						if (extensions.length === 0) {
+							const searchAction = 'Search';
+							const stopShowing = 'Don\'t show again';
+							vscode.window.showInformationMessage('Search for extensions to view mermaid in markdown preview?', searchAction, stopShowing).then(selectedAction => {
+								if (selectedAction === searchAction) {
+									vscode.commands.executeCommand('workbench.extensions.search', 'tag:mermaid');
+								} else if (selectedAction === stopShowing) {
+									vscode.workspace.getConfiguration('mermaid').update('searchForExtensions', false, vscode.ConfigurationTarget.Global);
+								}
+							});
+						}
 						break;
 				}
 			},

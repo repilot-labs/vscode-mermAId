@@ -13,12 +13,20 @@
   "enabledApiProposals": [
     "lmTools"
   ],
-  "extensionDependencies": [
-    "bierner.markdown-mermaid"
-  ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "mermaid",
+      "type": "object",
+      "properties": {
+        "mermaid.searchForExtensions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Search for mermaid extensions when viewing mermaid source."
+        }
+      }
+    },
     "chatParticipants": [
       {
         "id": "copilot-diagram.mermAId",
