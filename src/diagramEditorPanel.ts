@@ -47,11 +47,24 @@ export class DiagramEditorPanel {
 
 		// Handle messages from the webview
 		this._panel.webview.onDidReceiveMessage(
-			message => {
+			async message => {
 				switch (message.command) {
-					case 'alert':
-						vscode.window.showErrorMessage(message.text);
-						return;
+					case 'save-svg':
+						const uri = await vscode.window.showSaveDialog({
+							filters: {
+								'SVG Files': ['svg']
+							}
+						});
+
+						if (uri) {
+							await vscode.workspace.fs.writeFile(uri, Buffer.from(this._diagram.asSvg(), 'utf8'));
+							vscode.window.showInformationMessage('SVG saved successfully!');
+						}
+						break;
+					case 'mermaid-source':
+						const document = await vscode.workspace.openTextDocument({ language: 'markdown', content: this._diagram.content });
+            			await vscode.window.showTextDocument(document);
+						break;
 				}
 			},
 			null,
@@ -127,6 +140,18 @@ export class DiagramEditorPanel {
 						<span class="button">
 							<button id="zoom-out">
 								-
+								<!--div class=codicon-zoom-out></div-->
+							</button>
+						</span>
+						<span class="button">
+							<button id="save-svg">
+								save SVG
+								<!--div class=codicon-zoom-out></div-->
+							</button>
+						</span>
+						<span class="button">
+							<button id="mermaid-source">
+								view mermaid source
 								<!--div class=codicon-zoom-out></div-->
 							</button>
 						</span>

@@ -42,7 +42,7 @@
           "editors",
           "chat-tools-sample"
         ],
-        "name": "get symbol definition",
+        "name": "get-symbol-definition",
         "displayName": "Symbol Definition",
         "modelDescription": "Given a file path string and a list of symbols, this model returns the definitions of the specified symbols. For example, if the file 'x.py' is provided and the symbol 'abc' is requested, the model will find 'abc' in 'x.py' and return its definition from the file where it is actually defined, such as 'y.py'.",
         "icon": "$(files)",

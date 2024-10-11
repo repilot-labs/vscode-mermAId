@@ -13,6 +13,16 @@
             document.getElementById("zoom-out").addEventListener("click", () => {
                 zoomDiagram(-0.1);
             });
+            document.getElementById("save-svg").addEventListener("click", () => {
+                vscode.postMessage({
+                    command: 'save-svg'
+                });
+            });
+            document.getElementById("mermaid-source").addEventListener("click", () => {
+                vscode.postMessage({
+                    command: 'mermaid-source'
+                });
+            });
         }
     }, 500);
 
