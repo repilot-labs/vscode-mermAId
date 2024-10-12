@@ -74,7 +74,8 @@ export class DiagramEditorPanel {
 	}
 
 	private checkForMermaidExtensions() {
-		if (vscode.workspace.getConfiguration('mermaid').get('searchForExtensions') !== false) {
+		const setting = vscode.workspace.getConfiguration('mermaid').get('searchForExtensions');
+		if (setting !== false) {
 			const extensions = vscode.extensions.all.filter(extension => extension.packageJSON.keywords && extension.packageJSON.keywords.includes('mermaid'));
 			if (extensions.length === 0) {
 				const searchAction = 'Search';
