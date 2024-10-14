@@ -121,7 +121,7 @@ export class DiagramEditorPanel {
 		this._panel.webview.html = DiagramEditorPanel.getHtmlForWebview(webview, this._diagram.asSvg());
 	}
 
-	public static getHtmlForWebview(webview: vscode.Webview, svg: string) {
+	private static getWebviewResources(webview: vscode.Webview) {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'main.js');
 
@@ -140,6 +140,11 @@ export class DiagramEditorPanel {
 		const stylesCustomUri = webview.asWebviewUri(stylesCustom);
 		const codiconsUri = webview.asWebviewUri(codiconsPath);
 
+		return { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri };
+	}
+
+	public static getHtmlForWebview(webview: vscode.Webview, svg: string, additionalButtons: boolean = true) {
+		const { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri } = DiagramEditorPanel.getWebviewResources(webview);
 		return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
@@ -168,12 +173,12 @@ export class DiagramEditorPanel {
 							</button>
 						</span>
 						<span class='divider'></span>
-						<span class="button">
+						<span class="button hidden">
 							<button id="save-svg">
 								<div class="icon"><i class="codicon codicon-save-as"></i>Save SVG</div>
 							</button>
 						</span>
-						<span class="button">
+						<span class="button hidden">
 							<button id="mermaid-source">
 								<div class="icon"><i class="codicon codicon-markdown"></i>View Source</div>
 							</button>
@@ -186,7 +191,7 @@ export class DiagramEditorPanel {
 					</div>
 					
 			
-				<script src="${scriptUri}"></script>
+				<script additionalButtons='${additionalButtons}' src="${scriptUri}"></script>
 			</body>
 			</html>`;
 	}

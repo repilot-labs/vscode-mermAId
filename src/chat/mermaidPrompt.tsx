@@ -229,7 +229,7 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 				logMessage(diagram.content);
 				return (
 					<>
-					<AssistantMessage>
+					<UserMessage>
 						The user has indicated they want to iterate on the latest diagram.
 						Their current diagram is the following:
 						${diagram.content}
@@ -241,7 +241,7 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 						${beforeIterateCommandExampleDiagram}
 						Then you should emit the following diagram:
 						${afterIterateCommandExampleDiagram}
-					</AssistantMessage>
+					</UserMessage>
 					</>
 				)
 			case 'uml':

@@ -4,6 +4,10 @@
     display: flex;
 }
 
+.hidden {
+    display: none;
+}
+
 .toolbar .button {
     margin: 2px;
     min-width: 18px;

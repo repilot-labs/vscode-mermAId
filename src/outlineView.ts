@@ -31,6 +31,8 @@ Do not include any other text before or after the diagram, only include the diag
 
 let outlineViewCancellationTokenSource: vscode.CancellationTokenSource | undefined;
 
+let followActiveDocument = false;
+
 export function registerOutlineView(context: vscode.ExtensionContext) {
     const outlineView = new OutlineViewProvider(context);
     context.subscriptions.push(
@@ -50,6 +52,23 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
             outlineView.generateOutlineDiagram(outlineViewCancellationTokenSource.token);
         })
     );
+
+    // When enabled, toggle automatically updating
+    // outline whenever focused document changes
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilot-mermAId-diagram.follow-outline', () => {
+            followActiveDocument = !followActiveDocument;
+            vscode.window.showInformationMessage(`Follow ${followActiveDocument ? 'enabled' : 'disabled'}`);
+        })
+    );
+
+    // Listen for active text editor change
+    vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor | undefined) => {
+        if (followActiveDocument) {
+            logMessage(`Active document changed to: ${e?.document.fileName}`);
+            vscode.commands.executeCommand('copilot-mermAId-diagram.refresh-outline');
+        }
+    });
 
     // TODO: update webview when underlying diagram changes.
     // vscode.workspace.createFileSystemWatcher
@@ -95,6 +114,10 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
     const runWithTools = async (): Promise<Diagram | undefined> => {
         const toolCalls: IToolCall[] = [];
         let mermaidDiagram = '';
+
+        if (cancellationToken.isCancellationRequested) {
+            return;
+        }
 
         const response = await model.sendRequest(messages, options, cancellationToken);
         // Loop for reading response from the LLM
@@ -216,7 +239,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 this._view.webview.html = template('<p>Empty diagram</p>');
                 return;
             }
-            this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, svgContents);
+            this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, svgContents, false);
         } catch (e) {
             this._view.webview.html = template('<p>No diagram</p>');
             return;
@@ -229,8 +252,6 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.options = {
             enableScripts: true,
         };
-
-        // await vscode.commands.executeCommand('copilot-mermAId-diagram.refresh-outline');
         this._setOutlineDiagram();
     }
 

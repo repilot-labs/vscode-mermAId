@@ -3,6 +3,12 @@
 
     zoomLevel = 1;
 
+    const additionalButtons = document.currentScript.getAttribute('additionalButtons');
+    if (additionalButtons !== 'false') {
+        document.getElementById('save-svg').parentElement.classList.remove('hidden');
+        document.getElementById('mermaid-source').parentElement.classList.remove('hidden');
+    }
+
     const interaval = setInterval(() => {
         if (makeDraggable()) {
             clearInterval(interaval);

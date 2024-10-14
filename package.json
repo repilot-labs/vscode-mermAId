@@ -116,6 +116,11 @@
           "command": "copilot-mermAId-diagram.refresh-outline",
           "when": "view == mermaid-outline-diagram",
           "group": "navigation"
+        },
+        {
+          "command": "copilot-mermAId-diagram.follow-outline",
+          "when": "view == mermaid-outline-diagram",
+          "group": "navigation"
         }
       ]
     },
@@ -123,6 +128,10 @@
       {
         "command": "copilot-mermAId-diagram.refresh-outline",
         "title": "Refresh"
+      },
+      {
+        "command": "copilot-mermAId-diagram.follow-outline",
+        "title": "Follow"
       }
     ]
   },
