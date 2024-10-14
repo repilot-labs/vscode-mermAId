@@ -68,11 +68,18 @@ implements vscode.LanguageModelTool<IGetSymbolDefinition>
       >("vscode.executeDefinitionProvider",  document.uri, p2);
 
       if (Array.isArray(definitions)) {
+        
         for (const definition of definitions) {
+          let uriDef;
+          if (definition instanceof vscode.Location) {
+             uriDef =definition.uri;
+          } else {
+            uriDef = definition.targetUri;
+          }
           const document = await vscode.workspace.openTextDocument(
-            definition.targetUri
+            uriDef
           );
-          if (definition.targetUri && !resultMap.has(definition.targetUri.toString())) {
+          if (uriDef && !resultMap.has(uriDef.toString())) {
             resultMap.set(document.uri.fsPath, document.getText());
           }
         }
