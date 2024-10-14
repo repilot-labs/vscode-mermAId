@@ -29,7 +29,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
 
     options.tools = vscode.lm.tools.map((tool): vscode.LanguageModelChatTool => {
         return {
-            name: tool.id,
+            name: tool.name,
             description: tool.description,
             parametersSchema: tool.parametersSchema ?? {}
         };
@@ -78,7 +78,6 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                     responseStr += part.value;
                 }
             } else if (part instanceof vscode.LanguageModelToolCallPart) {
-                part.parameters = JSON.parse(part.parameters);
                 toolCalls.push(part);
             }
 
@@ -150,7 +149,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
                 stream.button(openNewFileCommand);
             }
         }
-    }; 
+    };
 
     await runWithFunctions();
 }
@@ -195,8 +194,8 @@ function specifyAssociations(messages: vscode.LanguageModelChatMessage[]) {
     ));
 }
 
-    function relationshipsContext(messages: vscode.LanguageModelChatMessage[]) {
-        const relationships =`
+function relationshipsContext(messages: vscode.LanguageModelChatMessage[]) {
+    const relationships = `
  <|-- Inheritance: Represents a "is-a" relationship where a subclass inherits from a superclass.
 *-- Composition: Represents a "whole-part" relationship where the part cannot exist without the whole.
 o-- Aggregation: Represents a "whole-part" relationship where the part can exist independently of the whole.
@@ -207,5 +206,5 @@ o-- Aggregation: Represents a "whole-part" relationship where the part can exist
 .. Link (Dashed): Represents a weaker connection or relationship between instances of classes.
 `;
     messages.push(vscode.LanguageModelChatMessage.Assistant(relationships));
-    }
-    
+}
+
