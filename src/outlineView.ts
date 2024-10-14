@@ -75,7 +75,7 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
         justification: 'To display a dynamic diagram of the file outline',
         tools: vscode.lm.tools.map((tool): vscode.LanguageModelChatTool => {
             return {
-                name: tool.id,
+                name: tool.name,
                 description: tool.description,
                 parametersSchema: tool.parametersSchema ?? {}
             };
@@ -101,22 +101,17 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
             if (part instanceof vscode.LanguageModelTextPart) {
                 mermaidDiagram += part.value;
             } else if (part instanceof vscode.LanguageModelToolCallPart) {
-                const toolUsed = vscode.lm.tools.find(t => t.id === part.name);
-                logMessage(`🛠️ Used tool '${toolUsed?.id}' to generate diagram`);
+                const toolUsed = vscode.lm.tools.find(t => t.name === part.name);
+                logMessage(`🛠️ Used tool '${toolUsed?.name}' to generate diagram`);
                 if (!toolUsed) {
                     throw new Error(`Tool ${part.name} invalid`);
                 }
-                let parameters: any;
-                try {
-                    parameters = JSON.parse(part.parameters);
-                } catch (err) {
-                    throw new Error(`Got invalid tool use parameters: "${part.parameters}". (${(err as Error).message})`);
-                }
+                const parameters = part.parameters;
 
                 const requestedContentType = 'text/plain';
                 toolCalls.push({
                     call: part,
-                    result: vscode.lm.invokeTool(toolUsed.id,
+                    result: vscode.lm.invokeTool(toolUsed.name,
                         {
                             parameters,
                             toolInvocationToken: undefined,
@@ -129,7 +124,7 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
             // if any tools were used, add them to the context and re-run the query
             if (toolCalls.length) {
                 const assistantMsg = vscode.LanguageModelChatMessage.Assistant('');
-                assistantMsg.content2 = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.id, toolCall.call.toolCallId, toolCall.call.parameters));
+                assistantMsg.content2 = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.name, toolCall.call.toolCallId, toolCall.call.parameters));
                 messages.push(assistantMsg);
                 for (const toolCall of toolCalls) {
                     // NOTE that the result of calling a function is a special content type of a USER-message
@@ -139,7 +134,7 @@ export async function promptLLMForOutlineDiagram(context: vscode.ExtensionContex
                 }
 
                 // IMPORTANT The prompt must end with a USER message (with no tool call)
-                messages.push(vscode.LanguageModelChatMessage.User(`Above is the result of calling the functions ${toolCalls.map(call => call.tool.id).join(', ')}. Use this as you iterate on the mermaid diagram.`));
+                messages.push(vscode.LanguageModelChatMessage.User(`Above is the result of calling the functions ${toolCalls.map(call => call.tool.name).join(', ')}. Use this as you iterate on the mermaid diagram.`));
 
                 // RE-enter
                 return runWithTools();
@@ -209,7 +204,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             return;
         }
 
-        if (!this.diagram) { 
+        if (!this.diagram) {
             this._view.webview.html = template('<p>Refresh to generate diagram</p>');
             return;
         }

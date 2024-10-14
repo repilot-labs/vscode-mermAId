@@ -108,7 +108,7 @@ interface ToolCallElementProps extends BasePromptElementProps {
 
 class ToolCallElement extends PromptElement<ToolCallElementProps, void> {
 	async render(state: void, sizing: PromptSizing): Promise<PromptPiece | undefined> {
-		const tool = vscode.lm.tools.find(t => t.id === this.props.toolCall.name);
+		const tool = vscode.lm.tools.find(t => t.name === this.props.toolCall.name);
 		if (!tool) {
 			console.error(`Tool not found: ${this.props.toolCall.name}`);
 			return <ToolMessage toolCallId={this.props.toolCall.toolCallId}>Tool not found</ToolMessage>;
@@ -116,7 +116,7 @@ class ToolCallElement extends PromptElement<ToolCallElementProps, void> {
 
 		const contentType = agentSupportedContentTypes.find(type => tool.supportedContentTypes.includes(type));
 		if (!contentType) {
-			console.error(`Tool does not support any of the agent's content types: ${tool.id}`);
+			console.error(`Tool does not support any of the agent's content types: ${tool.name}`);
 			return <ToolMessage toolCallId={this.props.toolCall.toolCallId}>Tool unsupported</ToolMessage>;
 		}
 
