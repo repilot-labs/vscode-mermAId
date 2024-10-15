@@ -96,7 +96,7 @@
         {
           "id": "mermAId-container",
           "title": "Outline (Mermaid)",
-          "icon": ""
+          "icon": "./assets/mermaid.svg"
         }
       ]
     },
