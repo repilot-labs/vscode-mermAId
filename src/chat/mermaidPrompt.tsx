@@ -49,8 +49,9 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 					- The final segment of your response should always be a valid mermaid diagram 
 					prefixed with a line containing  \`\`\`mermaid and suffixed with a line 
 					containing \`\`\`. <br />
-					- Nothing should follow the closing \`\`\` delimiter and the \`\`\` delimiter 
-					should only occur in the two places mentioned above.
+					- Do not add anything to the response past the closing \`\`\` delimiter or 
+					we won't be able to parse the response correctly. <br />
+					- The \`\`\` delimiter should only occur in the two places mentioned above.
 				</UserMessage>
 				<RequestCommand commandName={this.props.command ?? ''}></RequestCommand>
 				<History context={this.props.context} priority={10}></History>
