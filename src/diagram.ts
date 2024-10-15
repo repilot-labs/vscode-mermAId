@@ -5,12 +5,12 @@ export class Diagram {
     private validated: boolean = false;
 
     constructor(private readonly _content: string) {
-        this._content = this._content
-            .replace(/^```mermaid/, '')
-            .replace(/```$/, '').trim();
+        const start = '```mermaid';
+        this._content = this._content.substring(this._content.indexOf(start) + start.length);
+        this._content = this._content.substring(0, this._content.indexOf('```')).trim();
     }
 
-    get content(): string { 
-        return this._content; 
+    get content(): string {
+        return this._content;
     }
 }
