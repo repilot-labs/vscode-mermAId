@@ -12,11 +12,11 @@ export class DiagramEditorPanel {
 
 	public static readonly viewType = 'mermaidDiagram';
 
-	
+
 	public static extensionUri: vscode.Uri;
-	
+
 	private readonly _panel: vscode.WebviewPanel;
-	private parseDetails:  { success: boolean, error: string } | undefined = undefined;
+	private parseDetails: { success: boolean, error: string } | undefined = undefined;
 	private _disposables: vscode.Disposable[] = [];
 
 	get diagram() {
@@ -124,7 +124,7 @@ export class DiagramEditorPanel {
 	// Validates the diagram inside of a webview.  If successful,
 	// updates this webview to display the diagram.
 	// On failure, returns the parse error details for the caller to handle.
-	private async _validate(diagram?: Diagram): Promise<{ success: true} | { success: false, error: string }> {
+	private async _validate(diagram?: Diagram): Promise<{ success: true } | { success: false, error: string }> {
 		if (diagram) {
 			this._diagram = diagram;
 		}
@@ -216,6 +216,7 @@ export class DiagramEditorPanel {
 
 	public static getHtmlForWebview(webview: vscode.Webview, mermaidMd: string, additionalButtons: boolean = true) {
 		const { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri, mermaidUri } = DiagramEditorPanel.getWebviewResources(webview);
+		const theme = vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark' : 'default';
 		return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
@@ -285,7 +286,7 @@ export class DiagramEditorPanel {
 					console.log(document.getElementById('mermaid-diagram-pre').textContent);
 					
 					console.log('initializing mermaid');
-					mermaid.initialize({ startOnLoad: true,  securityLevel: 'loose' }); // loose needed to click links
+					mermaid.initialize({ startOnLoad: true,  securityLevel: 'loose', theme: '${theme}' }); // loose needed to click links
 					console.log('done initializing mermaid');
 				</script>
 			</body>
