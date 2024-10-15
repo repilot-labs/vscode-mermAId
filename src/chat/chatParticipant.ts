@@ -81,33 +81,32 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             } else if (part instanceof vscode.LanguageModelToolCallPart) {
                 toolCalls.push(part);
             }
-        
 
+        }
 
-            if (toolCalls.length) {
-                toolCallRounds.push({
-                    response: responseStr,
-                    toolCalls
-                });
-                const result = (await renderPrompt(
-                    MermaidPrompt,
-                    {
-                        context: chatContext,
-                        request,
-                        toolCallRounds,
-                        toolCallResults: accumulatedToolResults,
-                        command: request.command
-                    },
-                    { modelMaxPromptTokens: model.maxInputTokens },
-                    model));
-                messages = result.messages;
-                const toolResultMetadata = result.metadatas.getAll(ToolResultMetadata);
-                if (toolResultMetadata?.length) {
-                    toolResultMetadata.forEach(meta => accumulatedToolResults[meta.toolCallId] = meta.result);
-                }
-
-                return runWithFunctions();
+        if (toolCalls.length) {
+            toolCallRounds.push({
+                response: responseStr,
+                toolCalls
+            });
+            const result = (await renderPrompt(
+                MermaidPrompt,
+                {
+                    context: chatContext,
+                    request,
+                    toolCallRounds,
+                    toolCallResults: accumulatedToolResults,
+                    command: request.command
+                },
+                { modelMaxPromptTokens: model.maxInputTokens },
+                model));
+            messages = result.messages;
+            const toolResultMetadata = result.metadatas.getAll(ToolResultMetadata);
+            if (toolResultMetadata?.length) {
+                toolResultMetadata.forEach(meta => accumulatedToolResults[meta.toolCallId] = meta.result);
             }
+
+            return runWithFunctions();
         }
 
         logMessage(mermaidDiagram);
