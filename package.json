@@ -34,7 +34,6 @@
         "name": "mermAId",
         "description": "Work with diagrams in the chat",
         "isSticky": true,
-        "supportsToolReferences": true,
         "commands": [
           {
             "name": "uml",
@@ -122,6 +121,16 @@
           "when": "view == mermaid-outline-diagram",
           "group": "navigation"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "mermAId.openMarkdownFile",
+          "when": "false"
+        },
+        {
+          "command": "mermAId.openDiagramSvg",
+          "when": "false"
+        }
       ]
     },
     "commands": [
@@ -132,6 +141,14 @@
       {
         "command": "copilot-mermAId-diagram.follow-outline",
         "title": "Follow"
+      },
+      {
+        "command": "mermAId.openDiagramSvg",
+        "title": "View rendered SVG"
+      },
+      {
+        "command": "mermAId.openMarkdownFile",
+        "title": "Open Markdown File"
       }
     ]
   },

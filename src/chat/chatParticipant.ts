@@ -5,6 +5,7 @@ import { DiagramEditorPanel } from '../diagramEditorPanel';
 import { renderPrompt } from '@vscode/prompt-tsx';
 import { MermaidPrompt, ToolResultMetadata } from './mermaidPrompt';
 import { ToolCallRound } from './toolMetadata';
+import { COMMAND_OPEN_MARKDOWN_FILE } from '../commands';
 
 export function registerChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = chatRequestHandler;
@@ -140,15 +141,12 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
             DiagramEditorPanel.createOrShow(diagram);
 
             // add button to show markdown file for the diagram
-            if (result.diagramPath) {
-                const diagramFileUri = vscode.Uri.file(result.diagramPath);
-                const openNewFileCommand: vscode.Command = {
-                    command: 'vscode.open',
-                    title: vscode.l10n.t('See mermaid diagram markdown'),
-                    arguments: [diagramFileUri]
-                };
-                stream.button(openNewFileCommand);
-            }
+            const openNewFileCommand: vscode.Command = {
+                command: COMMAND_OPEN_MARKDOWN_FILE,
+                title: vscode.l10n.t('Open mermaid source'),
+                arguments: [diagram.content]
+            };
+            stream.button(openNewFileCommand);
         }
     };
 
