@@ -136,11 +136,13 @@
     "commands": [
       {
         "command": "copilot-mermAId-diagram.refresh-outline",
-        "title": "Refresh"
+        "title": "Refresh",
+        "icon": "./assets/refresh.svg"
       },
       {
         "command": "copilot-mermAId-diagram.follow-outline",
-        "title": "Follow"
+        "title": "Follow",
+        "icon": "./assets/pinned.svg"
       },
       {
         "command": "mermAId.openDiagramSvg",

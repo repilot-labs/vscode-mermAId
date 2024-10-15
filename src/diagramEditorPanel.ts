@@ -193,14 +193,13 @@ export class DiagramEditorPanel {
 
 					mermaid.parseError = function (err, hash) {
 						console.log('error parsing diagram');
-					    vscode.postMessage({
-                    		command: 'parse-result',
+						vscode.postMessage({
+							command: 'parse-result',
 							success: false,
 							error: JSON.stringify(err)
-                		});
+						});
 					};
 					const diagramType = await mermaid.parse(diagram);
-					console.log('after parse')
 					console.log(JSON.stringify(diagramType));
 					if (diagramType) {
 						vscode.postMessage({
