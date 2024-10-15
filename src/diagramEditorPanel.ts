@@ -128,6 +128,11 @@ export class DiagramEditorPanel {
 		if (diagram) {
 			this._diagram = diagram;
 		}
+
+		if (this.diagram.content.indexOf('```') >= 0) {
+			return { success: false, error: 'diagram contains extra ``` characters' };
+		}
+
 		const webview = this._panel.webview;
 		this._panel.title = '@mermAId Diagram';
 
