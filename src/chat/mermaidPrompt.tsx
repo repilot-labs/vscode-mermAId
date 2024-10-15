@@ -270,9 +270,9 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 				);
 			default:
 				return (
-					<AssistantMessage>
+					<UserMessage>
 						Pick an appropriate diagram type, for example: sequence, class, or flowchart.
-					</AssistantMessage>
+					</UserMessage>
 				);
 		}
 	}

@@ -4,12 +4,11 @@ import { COMMAND_OPEN_DIAGRAM_SVG } from './commands';
 
 export class CodelensProvider implements vscode.CodeLensProvider {
 
-    private regex: RegExp = /```mermaid/;
     private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
     public provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
-        if (DiagramDocument.documents.has(document.uri) && this.regex.test(document.lineAt(0).text)) {
+        if (DiagramDocument.documents.has(document.uri)) {
             const range = document.lineAt(0).range;
             const codeLens = new vscode.CodeLens(range);
             return [codeLens];
