@@ -5,7 +5,7 @@ export class DiagramDocument {
     public static documents: Set<vscode.Uri> = new Set<vscode.Uri>();
 
     public static async createAndShow(diagram: Diagram) {
-        const diagramDoc = new DiagramDocument(diagram.content);
+        const diagramDoc = new DiagramDocument(diagram.asMarkdown());
         const document = await diagramDoc.openDocument();
         DiagramDocument.documents.add(document.uri);
     }
