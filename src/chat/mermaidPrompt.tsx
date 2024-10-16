@@ -31,8 +31,9 @@ export interface MermaidProps extends BasePromptElementProps {
 export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 	render(state: void, sizing: PromptSizing) {
 		const doc = vscode.window.activeTextEditor?.document;
+		// full file contents are included through the prompt references, unless the user explicitly excludes them
 		const docRef = doc ? 
-			`My focus is currently on the file ${doc.uri.fsPath} with contents: ${doc.getText()}` : 
+			`My focus is currently on the file ${doc.uri.fsPath}` : 
 			`There is not a current file open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`;
 		const currentDiagram = DiagramEditorPanel.currentPanel?.diagram;
 		const diagramRef = currentDiagram ?
@@ -63,8 +64,8 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 				</UserMessage>
 				<RequestCommand commandName={this.props.command ?? ''}></RequestCommand>
 				<History context={this.props.context} priority={10}></History>
-				<UserMessage>docRef</UserMessage>
-				<UserMessage>diagramRef</UserMessage>
+				<UserMessage>{docRef}</UserMessage>
+				<UserMessage>{diagramRef}</UserMessage>
 				<PromptReferences
 					references={this.props.request.references}
 					priority={20}
