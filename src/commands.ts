@@ -8,7 +8,7 @@ export const COMMAND_OPEN_MARKDOWN_FILE = 'mermAId.openMarkdownFile';
 
 export function registerCommands() {
     commands.registerCommand(COMMAND_OPEN_DIAGRAM_SVG, async (content?: string) => {
-        const textContent = window.activeTextEditor?.document.getText();
+        const textContent = content ?? window.activeTextEditor?.document.getText();
 
         if (textContent) {
             const diagram = new Diagram(textContent);
