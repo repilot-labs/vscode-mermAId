@@ -59,6 +59,24 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
     const toolCallRounds: ToolCallRound[] = [];
     const runWithFunctions = async (): Promise<void> => {
 
+        if (request.command === 'help') {
+            stream.markdown(`
+## Welcome to the Mermaid Diagram Generator!
+
+Mermaid is a diagramming and charting tool that extends markdown. Visit their [website](https://mermaid.js.org/) to learn more about the tool.
+
+This chat agent generates useful diagrams using Mermaid to help you better understand your code and communicate your ideas to others. You can chat just by typing or use a command for a more specific intent.
+
+### Available Commands:
+- **\\uml**: Create Unified Modeling Language graph, or Class Diagram.
+- **\\flow**: Create a sequence, state, or user journey Diagram.
+- **\\iterate**: To be called when you already have a diagram up to refine, add, and change the existing diagram.
+
+Good luck and happy diagramming!
+            `);
+            return;
+        }
+
         if (request.command === 'iterate') {
             const diagram = DiagramEditorPanel.currentPanel?.diagram;
             if (!diagram) {

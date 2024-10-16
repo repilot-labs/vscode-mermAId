@@ -40,6 +40,10 @@
             "description": "Generate a UML diagram"
           },
           {
+            "name": "flow",
+            "description": "Generate sequence, state, or user journey diagrams"
+          },
+          {
             "name": "iterate",
             "description": "Iterate on a diagram generated in a previous chat turn",
             "disambiguation": [
@@ -53,6 +57,10 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "help",
+            "description": "How to use the mermAId agent"
           }
         ]
       }
