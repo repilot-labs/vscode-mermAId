@@ -9,12 +9,8 @@ export class DiagramEditorPanel {
 	 * Tracks the current panel. Only allows a single panel to exist at a time.
 	 */
 	public static currentPanel: DiagramEditorPanel | undefined;
-
 	public static readonly viewType = 'mermaidDiagram';
-
-
 	public static extensionUri: vscode.Uri;
-
 	private readonly _panel: vscode.WebviewPanel;
 	private parseDetails: { success: boolean, error: string } | undefined = undefined;
 	private _disposables: vscode.Disposable[] = [];
@@ -79,7 +75,7 @@ export class DiagramEditorPanel {
 						this.checkForMermaidExtensions();
 						break;
 					case 'parse-result':
-						logMessage(`Parse Result: ${JSON.stringify(message)}`);
+						logMessage(`(Chat) Parse Result: ${JSON.stringify(message)}`);
 						this.parseDetails = message;
 						break;
 				}
@@ -138,7 +134,7 @@ export class DiagramEditorPanel {
 
 		//jospicer TODO: This doesn't feel async safe. Rethink - lock?
 		this.parseDetails = undefined;
-		this._panel.webview.html = DiagramEditorPanel.getHtmlToValidateMermaid(webview, this._diagram.content);
+		this._panel.webview.html = DiagramEditorPanel.getHtmlToValidateMermaid(webview, this._diagram);
 
 		// wait for parseDetails to be set
 		return new Promise<{ success: true } | { success: false, error: string }>((resolve) => {
@@ -146,7 +142,7 @@ export class DiagramEditorPanel {
 				if (this.parseDetails !== undefined) {
 					clearInterval(interval);
 					if (this.parseDetails.success) {
-						this._panel.webview.html = DiagramEditorPanel.getHtmlForWebview(webview, this._diagram.content);
+						this._panel.webview.html = DiagramEditorPanel.getHtmlForWebview(webview, this._diagram);
 						resolve({ success: true });
 					} else {
 						resolve({ success: false, error: this.parseDetails.error });
@@ -181,7 +177,7 @@ export class DiagramEditorPanel {
 	}
 
 	// Mermaid has a 'validate' api that can be used to check if a diagram is valid
-	public static getHtmlToValidateMermaid(webview: vscode.Webview, mermaidMd: string) {
+	public static getHtmlToValidateMermaid(webview: vscode.Webview, diagram: Diagram) {
 		const { mermaidUri } = DiagramEditorPanel.getWebviewResources(webview);
 		return `<!DOCTYPE html>
 			<html lang="en">
@@ -193,7 +189,7 @@ export class DiagramEditorPanel {
 					import mermaid from '${mermaidUri}';
 
 					const diagram = \`
-					${mermaidMd}
+					${diagram.content}
 					\`;
 
 					mermaid.parseError = function (err, hash) {
@@ -218,7 +214,7 @@ export class DiagramEditorPanel {
 		`;
 	}
 
-	public static getHtmlForWebview(webview: vscode.Webview, mermaidMd: string, additionalButtons: boolean = true) {
+	public static getHtmlForWebview(webview: vscode.Webview, diagram: Diagram, additionalButtons: boolean = true) {
 		const { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri, mermaidUri } = DiagramEditorPanel.getWebviewResources(webview);
 		const theme = vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark' : 'default';
 		return `<!DOCTYPE html>
@@ -281,7 +277,7 @@ export class DiagramEditorPanel {
 					};
 
 					const diagram = \`
-					${mermaidMd}
+					${diagram.content}
 					\`;
 
 					document.getElementById('mermaid-diagram-pre').textContent = diagram;
