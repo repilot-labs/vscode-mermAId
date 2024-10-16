@@ -59,6 +59,14 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
     const toolCallRounds: ToolCallRound[] = [];
     const runWithFunctions = async (): Promise<void> => {
 
+        if (request.command === 'iterate') {
+            const diagram = DiagramEditorPanel.currentPanel?.diagram;
+            if (!diagram) {
+                stream.markdown('No diagram found in editor view. Please create a diagram first to iterate on it.');
+                return;
+            }   
+        }
+
         let isMermaidDiagramStreamingIn = false;
         let mermaidDiagram = '';
 
@@ -69,12 +77,16 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         for await (const part of response.stream) {
             if (part instanceof vscode.LanguageModelTextPart) {
                 if (!isMermaidDiagramStreamingIn && part.value.includes('```')) {
+                    // When we see a code block, assume it's a mermaid diagram
+                    stream.progress('Capturing mermaid diagram from the model...');
                     isMermaidDiagramStreamingIn = true;
                 }
 
                 if (isMermaidDiagramStreamingIn) {
+                    // Gather the mermaid diagram so we can validate it
                     mermaidDiagram += part.value;
                 } else {
+                    // Otherwise, render the markdown normally
                     stream.markdown(part.value);
                     responseStr += part.value;
                 }
