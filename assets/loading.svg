@@ -1,0 +1,66 @@
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Define the lines (edges) -->
+  <line x1="100" y1="100" x2="200" y2="100" stroke="gray" stroke-width="2" class="edge" style="opacity:0;" />
+  <line x1="200" y1="100" x2="300" y2="200" stroke="gray" stroke-width="2" class="edge" style="opacity:0;" />
+  <line x1="100" y1="100" x2="100" y2="200" stroke="gray" stroke-width="2" class="edge" style="opacity:0;" />
+  <line x1="100" y1="200" x2="200" y2="300" stroke="gray" stroke-width="2" class="edge" style="opacity:0;" />
+  <line x1="200" y1="300" x2="300" y2="200" stroke="gray" stroke-width="2" class="edge" style="opacity:0;" />
+
+  <!-- Define the circles (nodes) -->
+  <circle cx="100" cy="100" r="10" fill="lightgray" class="node" style="opacity:0;" />
+  <circle cx="200" cy="100" r="10" fill="lightgray" class="node" style="opacity:0;" />
+  <circle cx="300" cy="200" r="10" fill="lightgray" class="node" style="opacity:0;" />
+  <circle cx="100" cy="200" r="10" fill="lightgray" class="node" style="opacity:0;" />
+  <circle cx="200" cy="300" r="10" fill="lightgray" class="node" style="opacity:0;" />
+
+  <style>
+    /* Animation for edges */
+    .edge {
+      animation: drawEdge 8s ease-in-out forwards infinite alternate;
+    }
+
+    /* Animation for nodes */
+    .node {
+      animation: showNode 8s ease-in-out forwards infinite alternate;
+    }
+
+    /* Delay for each node and edge */
+    .edge:nth-child(1) { animation-delay: 1.5s; }
+    .edge:nth-child(2) { animation-delay: 2.5s; }
+    .edge:nth-child(3) { animation-delay: 3.5s; }
+    .edge:nth-child(4) { animation-delay: 4.5s; }
+    .edge:nth-child(5) { animation-delay: 5.5s; }
+
+    .node:nth-child(6) { animation-delay: 1.5s; }
+    .node:nth-child(7) { animation-delay: 2.5s; }
+    .node:nth-child(8) { animation-delay: 3.5s; }
+    .node:nth-child(9) { animation-delay: 4.5s; }
+    .node:nth-child(10) { animation-delay: 5.5s; }
+
+    /* Keyframes for edge drawing */
+    @keyframes drawEdge {
+      from {
+        opacity: 0;
+      }
+      60% {
+        opacity: 0.7; /* Hold at visible */
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
+    /* Keyframes for node appearing */
+    @keyframes showNode {
+      from {
+        opacity: 0;
+      }
+      60% {
+        opacity: 0.7; /* Hold at visible */
+      }
+      to {
+        opacity: 0;
+      }
+    }
+  </style>
+</svg>
