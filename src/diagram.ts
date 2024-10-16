@@ -9,6 +9,10 @@ export class Diagram {
         }
     }
 
+    asMarkdown(): string {
+        return `\`\`\`mermaid\n${this._content}\n\`\`\``;
+    }
+
     get content(): string {
         return this._content;
     }
