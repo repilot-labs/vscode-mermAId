@@ -152,7 +152,7 @@ export class DiagramEditorPanel {
 		});
 	}
 
-	private static getWebviewResources(webview: vscode.Webview) {
+	public static getWebviewResources(webview: vscode.Webview) {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'main.js');
 
@@ -163,6 +163,7 @@ export class DiagramEditorPanel {
 		const styleResetPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'reset.css');
 		const stylesPathMainPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'vscode.css');
 		const stylesCustom = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'styles.css');
+		const animatedGraph = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'animated_graph.gif');
 		const codiconsPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css');
 		const mermaidPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', 'mermaid', 'dist', 'mermaid.esm.min.mjs');
 
@@ -170,19 +171,22 @@ export class DiagramEditorPanel {
 		const stylesResetUri = webview.asWebviewUri(styleResetPath);
 		const stylesMainUri = webview.asWebviewUri(stylesPathMainPath);
 		const stylesCustomUri = webview.asWebviewUri(stylesCustom);
+		const animatedGraphUri = webview.asWebviewUri(animatedGraph);
 		const codiconsUri = webview.asWebviewUri(codiconsPath);
 		const mermaidUri = webview.asWebviewUri(mermaidPath);
 
-		return { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri, mermaidUri };
+		return { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri, mermaidUri, animatedGraphUri };
 	}
 
 	// Mermaid has a 'validate' api that can be used to check if a diagram is valid
 	public static getHtmlToValidateMermaid(webview: vscode.Webview, diagram: Diagram) {
-		const { mermaidUri } = DiagramEditorPanel.getWebviewResources(webview);
+		const { mermaidUri, animatedGraphUri } = DiagramEditorPanel.getWebviewResources(webview);
 		return `<!DOCTYPE html>
 			<html lang="en">
 			<body>
 				<h1>Validating diagram....hang tight!</h1>
+				<img src="${animatedGraphUri}" alt="animated graph">
+
 				
 				<script type="module">
 				 	const vscode = acquireVsCodeApi();

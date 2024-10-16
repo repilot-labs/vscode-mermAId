@@ -71,7 +71,6 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
 }
 
 
-
 class OutlineViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'mermaid-outline-diagram';
 
@@ -82,8 +81,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         if (!this._view) {
             return;
         }
-
-        this._view.webview.html = template('<p>Generating...</p>'); // TODO: Style
+        this.setGeneratingPage(); // TODO: Style
         try {
             logMessage('Generating outline diagram...');
             const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
@@ -268,6 +266,23 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             return;
         }
         return model;
+    }
+
+    private setGeneratingPage() {
+        if (!this._view) {
+            return;
+        }
+        const { animatedGraphUri } = DiagramEditorPanel.getWebviewResources(this._view.webview);
+        this._view.webview.html = `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body>
+        <img src="${animatedGraphUri}" alt="Loading image">
+        </body>
+        `;
     }
 
     constructor(private readonly context: vscode.ExtensionContext) { }
