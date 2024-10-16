@@ -113,7 +113,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 			null,
 		);
 
-        this._view.webview.html = template('<p>Refresh to generate an outline diagram</p> <p>Enable the pin to follow when changing views.</p>'); // TODO: Style
+        this.setGeneratingPage(); // TODO: Style
     }
 
     private async promptLLMToUpdateWebview(cancellationToken: vscode.CancellationToken) {
