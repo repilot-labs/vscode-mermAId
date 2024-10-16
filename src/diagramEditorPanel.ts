@@ -163,7 +163,7 @@ export class DiagramEditorPanel {
 		const styleResetPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'reset.css');
 		const stylesPathMainPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'vscode.css');
 		const stylesCustom = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'styles.css');
-		const animatedGraph = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'animated_graph.gif');
+		const animatedGraph = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'animated_graph.svg');
 		const codiconsPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css');
 		const mermaidPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', 'mermaid', 'dist', 'mermaid.esm.min.mjs');
 
@@ -185,7 +185,9 @@ export class DiagramEditorPanel {
 			<html lang="en">
 			<body>
 				<h1>Validating diagram....hang tight!</h1>
-				<img src="${animatedGraphUri}" alt="animated graph">
+				<object data="${animatedGraphUri}" type="image/svg+xml">
+					Your browser does not support SVG
+				</object>
 
 				
 				<script type="module">
