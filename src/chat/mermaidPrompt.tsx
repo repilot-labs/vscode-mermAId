@@ -30,12 +30,20 @@ export interface MermaidProps extends BasePromptElementProps {
 
 export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 	render(state: void, sizing: PromptSizing) {
+		const doc = vscode.window.activeTextEditor?.document;
+		const docRef = doc ? 
+			`My focus is currently on the file ${doc.uri.fsPath} with contents: ${doc.getText()}` : 
+			`There is not a current file open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`;
+		const currentDiagram = DiagramEditorPanel.currentPanel?.diagram;
+		const diagramRef = currentDiagram ?
+			`The diagram: ${currentDiagram.content} is open, so refer to that if it sounds like I'm referring to an existing diagram.` :
+			`There isn't a diagram open that you created.`;
 		return (
 			<>
 				<UserMessage>
 					Instructions: <br />
-					- You are helpful chat assistant that creates diagrams for the user
-					using the mermaid syntax. <br />
+					- You are helpful chat assistant that creates diagrams using the 
+					mermaid syntax. <br />
 					- If you aren't sure which tool is relevant, you can call multiple
 					tools. You can call tools repeatedly to take actions or gather as much
 					context as needed until you have completed the task fully. Don't give up
@@ -43,7 +51,7 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 					have. <br />
 					- Don't make assumptions about the situation- gather context first, then
 					perform the task or answer the question. <br />
-					- Don't ask the user for confirmation to use tools, just use them. <br />
+					- Don't ask for confirmation to use tools, just use them. <br />
 					- If you find a symbol you want to get the definition for, like a interface 
 					implemented by a class in the context, use the provided tool <br />
 					- The final segment of your response should always be a valid mermaid diagram 
@@ -88,7 +96,7 @@ class ToolCalls extends PromptElement<ToolCallsProps, void> {
 		// Note- the final prompt must end with a UserMessage
 		return <>
 			{this.props.toolCallRounds.map(round => this.renderOneToolCallRound(round, sizing))}
-			<UserMessage>Above is the result of calling one or more tools. The user cannot see the results, so you should explain them to the user if referencing them in your answer.</UserMessage>
+			<UserMessage>Above is the result of calling one or more tools, but they are not displayed, so you should explain them  if referencing them in your answer.</UserMessage>
 		</>
 	}
 
@@ -207,10 +215,6 @@ interface RequestCommandProps extends BasePromptElementProps {
 
 class RequestCommand extends PromptElement<RequestCommandProps, void> {
 	render(state: void, sizing: PromptSizing) {
-		const doc = vscode.window.activeTextEditor?.document;
-		const docRef = doc ? 
-			`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}` : 
-			`The user does not have any files open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`;
 		switch (this.props.commandName) {
 			case 'iterate':
 				// If diagram already exists
@@ -219,9 +223,9 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 					logMessage('Iterate: No existing diagram.');
 					return (
 						<>
-						<AssistantMessage>
+						<UserMessage>
 							End this chat conversation after explaining that you cannot iterate on a diagram that does not exist.
-						</AssistantMessage>
+						</UserMessage>
 						</>
 					)
 				}
@@ -230,14 +234,12 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 				return (
 					<>
 					<UserMessage>
-						The user has indicated they want to iterate on the latest diagram.
-						Their current diagram is the following:
-						${diagram.content}
+						Please make changes to the currently open diagram.
 
-						The user will give you a direct command on how to update the diagram.
-						Do not make any other edits except the user's directed suggestion.
-						It is much less likely you will need to use a tool, unless the user has asked a question that references the codebase.
-						For example, if the user says 'Change all int data types to doubles and change Duck to Bunny' in the following diagram:
+						There will be following instructions on how to update the diagram.
+						Do not make any other edits except my directed suggestion.
+						It is much less likely you will need to use a tool, unless the question references the codebase.
+						For example, if the insructions are 'Change all int data types to doubles and change Duck to Bunny' in the following diagram:
 						${beforeIterateCommandExampleDiagram}
 						Then you should emit the following diagram:
 						${afterIterateCommandExampleDiagram}
@@ -248,7 +250,7 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 				return (
 					<>
 						<UserMessage>
-							The user asked for a UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols
+							Please create UML diagram. Include all relevant classes in the file attached as context. You must use the tool mermAId_get_symbol_definition to get definitions of symbols
 							not defined in the current context. You should call it multiple times since you will likely need to get the definitions of multiple symbols.
 							Therefore for all classes you touch, explore their related classes using mermAId_get_symbol_definition to get their definitions and add them to the diagram.
 							All class relationships should be defined, the types of relationships that you can include, and their syntax in mermaid UML diagrams, are as follows:
@@ -263,7 +265,6 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 							
 							Before returning the diagram, list all the class relationships and explain them."
 						</UserMessage>
-						<UserMessage>{docRef}</UserMessage>
 						<UserMessage>
 							Remember that all class associations/should be defined! If one class has an instance of another it should be connected it it in the UML diagram.
 						</UserMessage>
