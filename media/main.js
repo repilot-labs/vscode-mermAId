@@ -29,6 +29,16 @@
                     command: 'mermaid-source'
                 });
             });
+
+            window.linkCallback = (location) => {
+                const split = location.split("#");
+
+                vscode.postMessage({
+                    command: 'navigate',
+                    path: encodeURI(split[0]),
+                    line: split.length > 1 ? split[1] : '',
+                });
+            };
         }
     }, 500);
 
