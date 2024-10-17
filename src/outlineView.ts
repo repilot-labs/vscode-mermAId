@@ -2,22 +2,8 @@ import * as vscode from 'vscode';
 import { logMessage } from './extension';
 import { IToolCall } from './chat/chatHelpers';
 import { Diagram } from './diagram';
-import { DiagramEditorPanel } from './diagramEditorPanel';
+import { DiagramEditorPanel, WebviewResources } from './diagramEditorPanel';
 
-
-const template = (innerContent: string) => `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.5">
-    <title>MermAId Outline Diagram</title>
-</head>
-<body>
-    ${innerContent}
-</body>
-</html>
-`;
 
 const llmInstructions = `
 You are helpful chat assistant that creates diagrams for the user using the mermaid syntax.
@@ -57,7 +43,10 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('copilot-mermAId-diagram.follow-outline', () => {
             followActiveDocument = !followActiveDocument;
-            vscode.window.showInformationMessage(`Follow ${followActiveDocument ? 'enabled' : 'disabled'}`); // TODO: Style
+            const msg = followActiveDocument
+                ? 'MermAId outline will automatically update when focused document changes'
+                : 'Disabled automatic MermAId outline updates';
+            vscode.window.showInformationMessage(msg); // TODO: Style
         })
     );
 
@@ -70,11 +59,11 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
     });
 }
 
-
 class OutlineViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'mermaid-outline-diagram';
 
     private _view?: vscode.WebviewView;
+    private _webviewResources?: WebviewResources;
     private parseDetails: { success: boolean, error: string } | undefined = undefined;
 
     public async generateOutlineDiagram(cancellationToken: vscode.CancellationToken) {
@@ -86,16 +75,17 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             logMessage('Generating outline diagram...');
             const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
             if (!success) {
-                this._view.webview.html = template('<p>Please try again.</p>'); // TODO: Style
+                this.setErrorPage(); // TODO: Style
             }
         } catch (e) {
             logMessage(`Unexpected error generating outline diagram: ${e}`);
-            this._view.webview.html = template('<p>Please try again.</p>'); // TODO: Style
+            this.setErrorPage(); // TODO: Style
         }
     }
 
     public async resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, token: vscode.CancellationToken): Promise<void> {
         this._view = webviewView;
+        this._webviewResources = DiagramEditorPanel.getWebviewResources(this._view.webview);
 
         webviewView.webview.options = {
             enableScripts: true,
@@ -108,12 +98,14 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 						logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
 						this.parseDetails = message;
 						break;
+                    default:
+                        logMessage(`(Outline) Unhandled message: ${JSON.stringify(message)}`);
 				}
 			},
 			null,
 		);
 
-        this._view.webview.html = template('<p>Refresh to generate an outline diagram</p> <p>Enable the pin to follow when changing views.</p>'); // TODO: Style
+        this.setLandingPage(); // TODO: Style
     }
 
     private async promptLLMToUpdateWebview(cancellationToken: vscode.CancellationToken) {
@@ -268,21 +260,78 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         return model;
     }
 
+    private template(innerHtmlContent: string, styleCssContent?: string) {
+        const { codiconsUri } = this._webviewResources!; // TODO: Assumes caller has already confirmed this is set
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=0.5">
+                <link href="${codiconsUri}" rel="stylesheet">
+                <title>MermAId Outline Diagram</title>
+                <style>
+                    ${styleCssContent}
+                </style>
+            </head>
+            <body>
+                ${innerHtmlContent}
+            </body>
+            </html>
+        `;
+    }
+
     private setGeneratingPage() {
-        if (!this._view) {
+        if (!this._view || !this._webviewResources) {
+            logMessage('ERR: No view or webview resources found');
             return;
         }
-        const { animatedGraphUri } = DiagramEditorPanel.getWebviewResources(this._view.webview);
-        this._view.webview.html = `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body>
-        <img src="${animatedGraphUri}" alt="Loading image">
-        </body>
-        `;
+        const { animatedGraphUri } = this._webviewResources;
+        this._view.webview.html = this.template(`
+            <img src="${animatedGraphUri}" alt="Loading image">
+        `, `
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }`);
+    }
+
+    private setLandingPage() {
+        if (!this._view || !this._webviewResources) {
+            logMessage('ERR: No view or webview resources found');
+            return;
+        }
+        this._view.webview.html = this.template(`
+            <div style="text-align: center; margin-top:20px">
+                <i class="codicon codicon-copilot" style="font-size: 48px;"></i>
+            </div>
+            <h1 style="text-align: center; font-weight: bold;">Diagram with Copilot</h1>
+            <p style="text-align: center;">Generate a Mermaid diagram of the active document, powered by Copilot.</p>
+
+            <div style="display: block; justify-content: center; align-items: center; gap: 16px; padding-top: 5px">
+                <div style="display: flex; justify-content: center; align-items: center; padding-bottom: 7px">
+                    <i class="codicon codicon-refresh"></i>
+                    <span style="margin-left: 8px;">to regenerate</span>
+                </div>
+                <div style="display: flex; justify-content: center; align-items: center;">
+                    <i class="codicon codicon-pinned"></i>
+                    <span style="margin-left: 8px;">to follow the active document</span>
+                </div>
+            </div>
+        `); // TODO: Style, Add buttons?
+    }
+
+    private setErrorPage() {
+        if (!this._view || !this._webviewResources) {
+            logMessage('ERR: No view or webview resources found');
+            return;
+        }
+        this._view.webview.html = this.template(`
+            <p>Please try again</p>
+        `); // TODO: Style
     }
 
     constructor(private readonly context: vscode.ExtensionContext) { }

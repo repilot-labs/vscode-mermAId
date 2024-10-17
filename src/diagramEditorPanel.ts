@@ -4,6 +4,16 @@ import { logMessage } from './extension';
 import { parse } from 'path';
 import { DiagramDocument } from './diagramDocument';
 
+export interface WebviewResources {
+	scriptUri: vscode.Uri;
+	stylesResetUri: vscode.Uri;
+	stylesMainUri: vscode.Uri;
+	stylesCustomUri: vscode.Uri;
+	codiconsUri: vscode.Uri;
+	mermaidUri: vscode.Uri;
+	animatedGraphUri: vscode.Uri;
+}
+
 export class DiagramEditorPanel {
 	/**
 	 * Tracks the current panel. Only allows a single panel to exist at a time.
@@ -163,7 +173,8 @@ export class DiagramEditorPanel {
 		});
 	}
 
-	public static getWebviewResources(webview: vscode.Webview) {
+
+	public static getWebviewResources(webview: vscode.Webview): WebviewResources {
 		// Local path to main script run in the webview
 		const scriptPathOnDisk = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'main.js');
 
@@ -174,7 +185,7 @@ export class DiagramEditorPanel {
 		const styleResetPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'reset.css');
 		const stylesPathMainPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'vscode.css');
 		const stylesCustom = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'styles.css');
-		const animatedGraph = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'animated_graph.gif');
+		const animatedGraph = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'animated_graph.svg');
 		const codiconsPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css');
 		const mermaidPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', 'mermaid', 'dist', 'mermaid.esm.min.mjs');
 
@@ -195,10 +206,7 @@ export class DiagramEditorPanel {
 		return `<!DOCTYPE html>
 			<html lang="en">
 			<body>
-				<h1>Validating diagram....hang tight!</h1>
-				<img src="${animatedGraphUri}" alt="animated graph">
-
-				
+				<img src="${animatedGraphUri}" alt="Validating image">				
 				<script type="module">
 				 	const vscode = acquireVsCodeApi();
 					import mermaid from '${mermaidUri}';
