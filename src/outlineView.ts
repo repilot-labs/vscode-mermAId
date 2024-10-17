@@ -2,22 +2,8 @@ import * as vscode from 'vscode';
 import { logMessage } from './extension';
 import { IToolCall } from './chat/chatHelpers';
 import { Diagram } from './diagram';
-import { DiagramEditorPanel } from './diagramEditorPanel';
+import { DiagramEditorPanel, WebviewResources } from './diagramEditorPanel';
 
-
-const template = (innerContent: string) => `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.5">
-    <title>MermAId Outline Diagram</title>
-</head>
-<body>
-    ${innerContent}
-</body>
-</html>
-`;
 
 const llmInstructions = `
 You are helpful chat assistant that creates diagrams for the user using the mermaid syntax.
@@ -57,7 +43,10 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('copilot-mermAId-diagram.follow-outline', () => {
             followActiveDocument = !followActiveDocument;
-            vscode.window.showInformationMessage(`Follow ${followActiveDocument ? 'enabled' : 'disabled'}`); // TODO: Style
+            const msg = followActiveDocument
+                ? 'MermAId outline will automatically update when focused document changes'
+                : 'Disabled automatic MermAId outline updates';
+            vscode.window.showInformationMessage(msg); // TODO: Style
         })
     );
 
@@ -70,11 +59,11 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
     });
 }
 
-
 class OutlineViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'mermaid-outline-diagram';
 
     private _view?: vscode.WebviewView;
+    private _webviewResources?: WebviewResources;
     private parseDetails: { success: boolean, error: string } | undefined = undefined;
 
     public async generateOutlineDiagram(cancellationToken: vscode.CancellationToken) {
@@ -86,16 +75,17 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             logMessage('Generating outline diagram...');
             const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
             if (!success) {
-                this._view.webview.html = template('<p>Please try again.</p>'); // TODO: Style
+                this.setErrorPage(); // TODO: Style
             }
         } catch (e) {
             logMessage(`Unexpected error generating outline diagram: ${e}`);
-            this._view.webview.html = template('<p>Please try again.</p>'); // TODO: Style
+            this.setErrorPage(); // TODO: Style
         }
     }
 
     public async resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, token: vscode.CancellationToken): Promise<void> {
         this._view = webviewView;
+        this._webviewResources = DiagramEditorPanel.getWebviewResources(this._view.webview);
 
         webviewView.webview.options = {
             enableScripts: true,
@@ -108,12 +98,14 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 						logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
 						this.parseDetails = message;
 						break;
+                    default:
+                        logMessage(`(Outline) Unhandled message: ${JSON.stringify(message)}`);
 				}
 			},
 			null,
 		);
 
-        this.setGeneratingPage(); // TODO: Style
+        this.setLandingPage(); // TODO: Style
     }
 
     private async promptLLMToUpdateWebview(cancellationToken: vscode.CancellationToken) {
