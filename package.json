@@ -125,8 +125,13 @@
           "group": "navigation"
         },
         {
-          "command": "copilot-mermAId-diagram.follow-outline",
-          "when": "view == mermaid-outline-diagram",
+          "command": "copilot-mermAId-diagram.enable-follow-outline",
+          "when": "view == mermaid-outline-diagram && !copilot-mermAId-diagram.followActiveDocument",
+          "group": "navigation"
+        },
+        {
+          "command": "copilot-mermAId-diagram.disable-follow-outline",
+          "when": "view == mermaid-outline-diagram && copilot-mermAId-diagram.followActiveDocument",
           "group": "navigation"
         }
       ],
@@ -148,8 +153,13 @@
         "icon": "./assets/refresh.svg"
       },
       {
-        "command": "copilot-mermAId-diagram.follow-outline",
-        "title": "Follow",
+        "command": "copilot-mermAId-diagram.enable-follow-outline",
+        "title": "Enable Follow",
+        "icon": "./assets/pin.svg"
+      },
+      {
+        "command": "copilot-mermAId-diagram.disable-follow-outline",
+        "title": "Disable Follow",
         "icon": "./assets/pinned.svg"
       },
       {

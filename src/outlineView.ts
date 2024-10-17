@@ -17,6 +17,7 @@ Do not include any other text before or after the diagram, only include the diag
 
 let outlineViewCancellationTokenSource: vscode.CancellationTokenSource | undefined;
 let followActiveDocument = false;
+const followOutlineContextKey = 'copilot-mermAId-diagram.followActiveDocument';
 
 export function registerOutlineView(context: vscode.ExtensionContext) {
     const outlineView = new OutlineViewProvider(context);
@@ -38,15 +39,14 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
         })
     );
 
-    // When enabled, toggle automatically updating
-    // outline whenever focused document changes
     context.subscriptions.push(
-        vscode.commands.registerCommand('copilot-mermAId-diagram.follow-outline', () => {
-            followActiveDocument = !followActiveDocument;
-            const msg = followActiveDocument
-                ? 'MermAId outline will automatically update when focused document changes'
-                : 'Disabled automatic MermAId outline updates';
-            vscode.window.showInformationMessage(msg); // TODO: Style
+        vscode.commands.registerCommand('copilot-mermAId-diagram.enable-follow-outline', () => {
+            followActiveDocument = true;
+            vscode.commands.executeCommand('setContext', followOutlineContextKey, true);
+        }),
+        vscode.commands.registerCommand('copilot-mermAId-diagram.disable-follow-outline', () => {
+            followActiveDocument = false;
+            vscode.commands.executeCommand('setContext', followOutlineContextKey, false);
         })
     );
 
@@ -70,15 +70,16 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         if (!this._view) {
             return;
         }
-        this.setGeneratingPage(); // TODO: Style
+        this.setGeneratingPage();
         try {
             logMessage('Generating outline diagram...');
             const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
             if (!success) {
+                logMessage(`Error generating outline diagram from LLM`);
                 this.setErrorPage(); // TODO: Style
             }
         } catch (e) {
-            logMessage(`Unexpected error generating outline diagram: ${e}`);
+            logMessage(`UNHANDLED error generating outline diagram: ${e}`);
             this.setErrorPage(); // TODO: Style
         }
     }
@@ -306,7 +307,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         }
         this._view.webview.html = this.template(`
             <div style="text-align: center; margin-top:20px">
-                <i class="codicon codicon-copilot" style="font-size: 48px;"></i>
+                <i class="codicon codicon-type-hierarchy-sub" style="font-size: 48px;"></i>
             </div>
             <h1 style="text-align: center; font-weight: bold;">Diagram with Copilot</h1>
             <p style="text-align: center;">Generate a Mermaid diagram of the active document, powered by Copilot.</p>
