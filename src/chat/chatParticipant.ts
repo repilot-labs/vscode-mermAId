@@ -6,9 +6,14 @@ import { renderPrompt } from '@vscode/prompt-tsx';
 import { MermaidPrompt, ToolResultMetadata } from './mermaidPrompt';
 import { ToolCallRound } from './toolMetadata';
 import { COMMAND_OPEN_MARKDOWN_FILE } from '../commands';
+import { renderMessages, toVsCodeChatMessages } from './chatHelpers';
+
+let develomentMode = false;
 
 export function registerChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = chatRequestHandler;
+
+    develomentMode = context.extensionMode === vscode.ExtensionMode.Development;
 
     const participant = vscode.chat.createChatParticipant('copilot-diagram.mermAId', handler);
     participant.iconPath = new vscode.ThemeIcon('pie-chart');
@@ -37,17 +42,15 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
     });
     logMessage(`Available tools: ${options.tools.map(tool => tool.name).join(', ')}`);
 
-    let { messages, references } = await renderPrompt(
-        MermaidPrompt,
-        {
-            context: chatContext,
-            request,
-            toolCallRounds: [],
-            toolCallResults: {},
-            command: request.command
-        },
-        { modelMaxPromptTokens: model.maxInputTokens },
-        model);
+    let { messages, references } = await renderMessages(model, {
+        context: chatContext,
+        request,
+        toolCallRounds: [],
+        toolCallResults: {},
+        command: request.command,
+        validationError : undefined
+    }, stream, develomentMode);
+
     references.forEach(ref => {
         if (ref.anchor instanceof vscode.Uri || ref.anchor instanceof vscode.Location) {
             stream.reference(ref.anchor);
@@ -82,16 +85,17 @@ Good luck and happy diagramming!
             if (!diagram) {
                 stream.markdown('No diagram found in editor view. Please create a diagram first to iterate on it.');
                 return;
-            }   
+            }
         }
 
         let isMermaidDiagramStreamingIn = false;
         let mermaidDiagram = '';
 
-        const response = await model.sendRequest(messages, options, token);
+        const response = await model.sendRequest(toVsCodeChatMessages(messages), options, token);
         const toolCalls: vscode.LanguageModelToolCallPart[] = [];
 
         let responseStr = '';
+        let validationError: string | undefined;
         for await (const part of response.stream) {
             if (part instanceof vscode.LanguageModelTextPart) {
                 if (!isMermaidDiagramStreamingIn && part.value.includes('```')) {
@@ -119,19 +123,16 @@ Good luck and happy diagramming!
                 response: responseStr,
                 toolCalls
             });
-            const result = (await renderPrompt(
-                MermaidPrompt,
-                {
-                    context: chatContext,
-                    request,
-                    toolCallRounds,
-                    toolCallResults: accumulatedToolResults,
-                    command: request.command
-                },
-                { modelMaxPromptTokens: model.maxInputTokens },
-                model));
+            const result = await renderMessages(model, {
+                context: chatContext,
+                request,
+                toolCallRounds,
+                toolCallResults: accumulatedToolResults,
+                command: request.command,
+                validationError
+            }, stream, develomentMode);
             messages = result.messages;
-            const toolResultMetadata = result.metadatas.getAll(ToolResultMetadata);
+            const toolResultMetadata = result.metadata.getAll(ToolResultMetadata);
             if (toolResultMetadata?.length) {
                 toolResultMetadata.forEach(meta => accumulatedToolResults[meta.toolCallId] = meta.result);
             }
@@ -161,13 +162,13 @@ Good luck and happy diagramming!
 
         logMessage(`Not successful (on retry=${++retries})`);
         if (retries === 1) {
-            addNestingContext(messages);
+            addNestingContext(toVsCodeChatMessages(messages));
         }
         if (retries < 4) {
-                stream.progress('Attempting to fix validation errors');
-                // we might be able to reset the messages to this message only
-                messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${mermaidDiagram}`));
-                return runWithFunctions();
+            stream.progress('Attempting to fix validation errors');
+            // we might be able to reset the messages to this message only
+            validationError = `Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${mermaidDiagram}`;
+            return runWithFunctions();
         } {
             if (result.error) {
                 logMessage(result.error);

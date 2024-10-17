@@ -23,6 +23,7 @@ import { DiagramEditorPanel } from '../diagramEditorPanel';
 export interface MermaidProps extends BasePromptElementProps {
 	request: vscode.ChatRequest;
 	command: string | undefined;
+	validationError: string | undefined;
 	context: vscode.ChatContext;
 	toolCallRounds: ToolCallRound[];
 	toolCallResults: Record<string, vscode.LanguageModelToolResult>;
@@ -81,6 +82,7 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 					toolInvocationToken={this.props.request.toolInvocationToken}
 					toolCallResults={this.props.toolCallResults}>
 				</ToolCalls>
+				<UserMessage>{this.props.validationError}</UserMessage>
 			</>
 		);
 	}
