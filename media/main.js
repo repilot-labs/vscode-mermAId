@@ -8,9 +8,9 @@
         // additionalButtons property is currently unused
     }
 
-    const interaval = setInterval(() => {
+    const interval = setInterval(() => {
         if (makeDraggable()) {
-            clearInterval(interaval);
+            clearInterval(interval);
 
             document.getElementById("zoom-in").addEventListener("click", () => {
                 zoomDiagram();
