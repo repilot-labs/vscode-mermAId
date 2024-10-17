@@ -17,7 +17,7 @@
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "mermaid",
+      "title": "mermAId",
       "type": "object",
       "properties": {
         "mermaid.searchForExtensions": {
@@ -103,7 +103,7 @@
       "activitybar": [
         {
           "id": "mermAId-container",
-          "title": "Outline (Mermaid)",
+          "title": "Outline (MermAId)",
           "icon": "./assets/mermaid.svg"
         }
       ]
