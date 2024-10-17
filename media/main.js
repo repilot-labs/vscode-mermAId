@@ -5,7 +5,6 @@
 
     const additionalButtons = document.currentScript.getAttribute('additionalButtons');
     if (additionalButtons !== 'false') {
-        document.getElementById('save-svg').parentElement.classList.remove('hidden');
         document.getElementById('mermaid-source').parentElement.classList.remove('hidden');
     }
 
@@ -18,11 +17,6 @@
             });
             document.getElementById("zoom-out").addEventListener("click", () => {
                 zoomDiagram(-0.1);
-            });
-            document.getElementById("save-svg").addEventListener("click", () => {
-                vscode.postMessage({
-                    command: 'save-svg'
-                });
             });
             document.getElementById("mermaid-source").addEventListener("click", () => {
                 vscode.postMessage({

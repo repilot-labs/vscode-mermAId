@@ -65,21 +65,6 @@ export class DiagramEditorPanel {
 		this._panel.webview.onDidReceiveMessage(
 			async message => {
 				switch (message.command) {
-					case 'save-svg':
-						// jospicer TODO: I broke this
-
-						// const uri = await vscode.window.showSaveDialog({
-						// 	filters: {
-						// 		'SVG Files': ['svg']
-						// 	}
-						// });
-
-						// if (uri) {
-						// 	await vscode.workspace.fs.writeFile(uri, Buffer.from(this._diagram.asSvg(), 'utf8'));
-						// 	vscode.window.showInformationMessage('SVG saved successfully!');
-						// }
-						vscode.window.showErrorMessage('TODO: SVG export is currently unimplemented, oops!');
-						break;
 					case 'mermaid-source':
 						await DiagramDocument.createAndShow(this._diagram);
 						this.checkForMermaidExtensions();
@@ -279,11 +264,6 @@ export class DiagramEditorPanel {
 							</button>
 						</span>
 						<span class='divider'></span>
-						<span class="button hidden">
-							<button id="save-svg">
-								<div class="icon"><i class="codicon codicon-save-as"></i>Save SVG</div>
-							</button>
-						</span>
 						<span class="button hidden">
 							<button id="mermaid-source">
 								<div class="icon"><i class="codicon codicon-markdown"></i>View Source</div>
