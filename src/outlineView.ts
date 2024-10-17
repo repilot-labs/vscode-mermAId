@@ -260,21 +260,78 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         return model;
     }
 
+    private template(innerHtmlContent: string, styleCssContent?: string) {
+        const { codiconsUri } = this._webviewResources!; // TODO: Assumes caller has already confirmed this is set
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=0.5">
+                <link href="${codiconsUri}" rel="stylesheet">
+                <title>MermAId Outline Diagram</title>
+                <style>
+                    ${styleCssContent}
+                </style>
+            </head>
+            <body>
+                ${innerHtmlContent}
+            </body>
+            </html>
+        `;
+    }
+
     private setGeneratingPage() {
-        if (!this._view) {
+        if (!this._view || !this._webviewResources) {
+            logMessage('ERR: No view or webview resources found');
             return;
         }
-        const { animatedGraphUri } = DiagramEditorPanel.getWebviewResources(this._view.webview);
-        this._view.webview.html = `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body>
-        <img src="${animatedGraphUri}" alt="Loading image">
-        </body>
-        `;
+        const { animatedGraphUri } = this._webviewResources;
+        this._view.webview.html = this.template(`
+            <img src="${animatedGraphUri}" alt="Loading image">
+        `, `
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }`);
+    }
+
+    private setLandingPage() {
+        if (!this._view || !this._webviewResources) {
+            logMessage('ERR: No view or webview resources found');
+            return;
+        }
+        this._view.webview.html = this.template(`
+            <div style="text-align: center; margin-top:20px">
+                <i class="codicon codicon-copilot" style="font-size: 48px;"></i>
+            </div>
+            <h1 style="text-align: center; font-weight: bold;">Diagram with Copilot</h1>
+            <p style="text-align: center;">Generate a Mermaid diagram of the active document, powered by Copilot.</p>
+
+            <div style="display: block; justify-content: center; align-items: center; gap: 16px; padding-top: 5px">
+                <div style="display: flex; justify-content: center; align-items: center; padding-bottom: 7px">
+                    <i class="codicon codicon-refresh"></i>
+                    <span style="margin-left: 8px;">to regenerate</span>
+                </div>
+                <div style="display: flex; justify-content: center; align-items: center;">
+                    <i class="codicon codicon-pinned"></i>
+                    <span style="margin-left: 8px;">to follow the active document</span>
+                </div>
+            </div>
+        `); // TODO: Style, Add buttons?
+    }
+
+    private setErrorPage() {
+        if (!this._view || !this._webviewResources) {
+            logMessage('ERR: No view or webview resources found');
+            return;
+        }
+        this._view.webview.html = this.template(`
+            <p>Please try again</p>
+        `); // TODO: Style
     }
 
     constructor(private readonly context: vscode.ExtensionContext) { }
