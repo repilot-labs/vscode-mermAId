@@ -244,7 +244,7 @@ export class DiagramEditorPanel {
 		`;
 	}
 
-	public static getHtmlForWebview(webview: vscode.Webview, diagram: Diagram, additionalButtons: boolean = true) {
+	public static getHtmlForWebview(webview: vscode.Webview, diagram: Diagram, showOpenInWindowButton: boolean = false) {
 		const { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri, mermaidUri } = DiagramEditorPanel.getWebviewResources(webview);
 		const theme = vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark' : 'default';
 		return `<!DOCTYPE html>
@@ -280,6 +280,11 @@ export class DiagramEditorPanel {
 								<div class="icon"><i class="codicon codicon-markdown"></i>View Source</div>
 							</button>
 						</span>
+						<span class="button hidden">
+							<button id="open-in-window">
+								<div class="icon"><i class="codicon codicon-new-file"></i>Open In Window</div>
+							</button>
+						</span>
 					</div>
 					<div id=mermaid-diagram class="diagram">
 						<div id=drag-handle class="dragHandle">
@@ -289,7 +294,7 @@ export class DiagramEditorPanel {
 					</div>
 					
 			
-				<script additionalButtons='${additionalButtons}' src="${scriptUri}"></script>
+				<script showOpenInWindowButton='${showOpenInWindowButton}' src="${scriptUri}"></script>
 				<script type="module">
 					import mermaid from '${mermaidUri}';
 

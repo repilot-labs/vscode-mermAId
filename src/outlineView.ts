@@ -110,6 +110,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 				switch (message.command) {
                     case 'mermaid-source':
                         if (!this._diagram) {
+                            logMessage('UNEXPECTED: No diagram found to show source');
                             return;
                         }
 						await DiagramDocument.createAndShow(this._diagram);
@@ -119,6 +120,13 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 						logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
 						this.parseDetails = message;
 						break;
+                    case 'open-in-window':
+                        if (!this._diagram) {
+                            logMessage('UNEXPECTED: No diagram found to open in window');
+                            return;
+                        }
+                        await DiagramEditorPanel.createOrShow(this._diagram);
+                        break;
                     default:
                         logMessage(`(Outline) Unhandled message: ${JSON.stringify(message)}`);
 				}
@@ -263,7 +271,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         if (cancellationToken.isCancellationRequested) {
                             return { success: false, error: 'Cancelled' };
                         }
-                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram);
+                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram, true);
                         this._diagram = candidateNextDiagram;
                         resolve({ success: true });
                     } else {
