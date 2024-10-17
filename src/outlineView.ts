@@ -76,11 +76,11 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
             if (!success) {
                 logMessage(`Error generating outline diagram from LLM`);
-                this.setErrorPage(); // TODO: Style
+                this.setErrorPage();
             }
         } catch (e) {
             logMessage(`UNHANDLED error generating outline diagram: ${e}`);
-            this.setErrorPage(); // TODO: Style
+            this.setErrorPage();
         }
     }
 
@@ -106,7 +106,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 			null,
 		);
 
-        this.setLandingPage(); // TODO: Style
+        this.setLandingPage();
     }
 
     private async promptLLMToUpdateWebview(cancellationToken: vscode.CancellationToken) {
@@ -331,8 +331,18 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             return;
         }
         this._view.webview.html = this.template(`
-            <p>Please try again</p>
-        `); // TODO: Style
+            <div style="display: flex; justify-content: center; align-items: center; padding-bottom: 7px">
+                <i class="codicon codicon-refresh"></i>
+                <span style="margin-left: 8px;">to generate diagram</span>
+            </div>
+        `,`
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }`); // TODO: Style more?
     }
 
     constructor(private readonly context: vscode.ExtensionContext) { }
