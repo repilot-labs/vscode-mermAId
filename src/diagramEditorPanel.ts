@@ -275,7 +275,7 @@ export class DiagramEditorPanel {
 							</button>
 						</span>
 						<span class='divider'></span>
-						<span class="button hidden">
+						<span class="button">
 							<button id="mermaid-source">
 								<div class="icon"><i class="codicon codicon-markdown"></i>View Source</div>
 							</button>

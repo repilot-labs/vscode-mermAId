@@ -5,7 +5,7 @@
 
     const additionalButtons = document.currentScript.getAttribute('additionalButtons');
     if (additionalButtons !== 'false') {
-        document.getElementById('mermaid-source').parentElement.classList.remove('hidden');
+        // additionalButtons property is currently unused
     }
 
     const interaval = setInterval(() => {

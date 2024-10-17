@@ -3,6 +3,7 @@ import { logMessage } from './extension';
 import { IToolCall } from './chat/chatHelpers';
 import { Diagram } from './diagram';
 import { DiagramEditorPanel, WebviewResources } from './diagramEditorPanel';
+import { DiagramDocument } from './diagramDocument';
 
 
 const llmInstructions = `
@@ -70,6 +71,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _webviewResources?: WebviewResources;
     private parseDetails: { success: boolean, error: string } | undefined = undefined;
+    private _diagram?: Diagram;
 
     public async generateOutlineDiagram(cancellationToken: vscode.CancellationToken) {
         if (!this._view) {
@@ -106,6 +108,13 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         this._view.webview.onDidReceiveMessage(
 			async message => {
 				switch (message.command) {
+                    case 'mermaid-source':
+                        if (!this._diagram) {
+                            return;
+                        }
+						await DiagramDocument.createAndShow(this._diagram);
+						// this.checkForMermaidExtensions();
+						break;
 					case 'parse-result':
 						logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
 						this.parseDetails = message;
@@ -254,7 +263,8 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         if (cancellationToken.isCancellationRequested) {
                             return { success: false, error: 'Cancelled' };
                         }
-                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram, false);
+                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram);
+                        this._diagram = candidateNextDiagram;
                         resolve({ success: true });
                     } else {
                         resolve({ success: false, error: this.parseDetails.error });
