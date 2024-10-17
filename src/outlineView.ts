@@ -236,7 +236,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                             logMessage('FAIL! No view found - where did it go!');
                             return { success: false, error: 'No view found. This is unexpected.' };
                         }
-                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram);
+                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram, false);
                         resolve({ success: true });
                     } else {
                         resolve({ success: false, error: this.parseDetails.error });

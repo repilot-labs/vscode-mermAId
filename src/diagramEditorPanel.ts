@@ -205,6 +205,17 @@ export class DiagramEditorPanel {
 		const { mermaidUri, animatedGraphUri } = DiagramEditorPanel.getWebviewResources(webview);
 		return `<!DOCTYPE html>
 			<html lang="en">
+			<head>
+				<style>
+				body {
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					height: 100vh;
+					margin: 0;
+				}
+				</style>
+			</head>
 			<body>
 				<img src="${animatedGraphUri}" alt="Validating image">				
 				<script type="module">
