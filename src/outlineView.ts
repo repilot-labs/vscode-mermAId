@@ -309,7 +309,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             <div style="text-align: center; margin-top:20px">
                 <i class="codicon codicon-type-hierarchy-sub" style="font-size: 48px;"></i>
             </div>
-            <h1 style="text-align: center; font-weight: bold;">Diagram with Copilot</h1>
+            <h1 style="text-align: center; font-weight: bold;">MermAId Outline</h1>
             <p style="text-align: center;">Generate a Mermaid diagram of the active document, powered by Copilot.</p>
 
             <div style="display: block; justify-content: center; align-items: center; gap: 16px; padding-top: 5px">
