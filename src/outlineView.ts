@@ -52,8 +52,13 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
 
     // Listen for active text editor change
     vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor | undefined) => {
-        if (followActiveDocument) {
-            logMessage(`Active document changed to: ${e?.document.fileName}`);
+        if (!e) {
+            logMessage('Active document changed to: none');
+            return;
+        }
+        logMessage(`Active document changed to: ${e.document?.fileName} (scheme=${e.document?.uri?.scheme})`);
+        if (followActiveDocument && e.document?.uri?.scheme === 'file') {
+            logMessage('Refreshing outline diagram');
             vscode.commands.executeCommand('copilot-mermAId-diagram.refresh-outline');
         }
     });
@@ -74,13 +79,19 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         try {
             logMessage('Generating outline diagram...');
             const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
+            if (cancellationToken.isCancellationRequested) {
+                logMessage('Cancellation requested, not updating webview');
+                return;
+            }
             if (!success) {
                 logMessage(`Error generating outline diagram from LLM`);
                 this.setErrorPage();
             }
         } catch (e) {
-            logMessage(`UNHANDLED error generating outline diagram: ${e}`);
-            this.setErrorPage();
+            logMessage(`UNHANDLED error generating outline diagram (cancelled=${cancellationToken.isCancellationRequested}): ${e}`);
+            if (!cancellationToken.isCancellationRequested) {
+                this.setErrorPage();
+            }
         }
     }
 
@@ -200,7 +211,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     
             // Validate the diagram
             const candidateNextDiagram = new Diagram(mermaidDiagram);
-            const result = await this.validate(candidateNextDiagram);
+            const result = await this.validate(candidateNextDiagram, cancellationToken);
 
             if (result.success) {
                 return result;
@@ -220,7 +231,10 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         return await runWithTools();
     }
 
-    private async validate(candidateNextDiagram: Diagram): Promise<{ success: true } | { success: false, error: string }> {
+    private async validate(candidateNextDiagram: Diagram, cancellationToken: vscode.CancellationToken): Promise<{ success: true } | { success: false, error: string }> {
+        if (cancellationToken.isCancellationRequested) {
+            return { success: false, error: 'Cancelled' };
+        }
         this.parseDetails = undefined; // TODO: This feels race-y.
         if (!this._view) {
             logMessage('FAIL! No view found - where did it go!');
@@ -236,6 +250,9 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         if (!this._view) {
                             logMessage('FAIL! No view found - where did it go!');
                             return { success: false, error: 'No view found. This is unexpected.' };
+                        }
+                        if (cancellationToken.isCancellationRequested) {
+                            return { success: false, error: 'Cancelled' };
                         }
                         this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram, false);
                         resolve({ success: true });
