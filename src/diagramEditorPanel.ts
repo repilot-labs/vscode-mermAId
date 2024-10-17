@@ -75,14 +75,25 @@ export class DiagramEditorPanel {
 						break;
 					case 'navigate':
 						const decoded = decodeURI(message.path);
-						const fragment = message.line.indexOf('L') === 0 ? message.line : `L${message.line}`;
+						const line = parseInt(message.line.replace('L', ''), 10);
 						const uri = vscode.Uri.from({
 							scheme: 'file',
 							path: decoded,
-							fragment,
+							fragment: `L${line}`,
 						});
 
-						vscode.commands.executeCommand('vscode.open', uri);
+						const openEditors = vscode.window.visibleTextEditors;
+						const existingEditor = openEditors.find(editor => editor.document.uri.path === uri.path);
+
+						if (existingEditor) {
+							const selection = new vscode.Range(line, 0, line, 0);
+							vscode.window.showTextDocument(existingEditor.document, {
+								viewColumn: existingEditor.viewColumn,
+								selection
+							});
+						} else {
+							vscode.commands.executeCommand('vscode.open', uri);
+						}
 						break;
 				}
 			},
