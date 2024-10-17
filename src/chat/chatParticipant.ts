@@ -72,7 +72,7 @@ This chat agent generates useful diagrams using Mermaid to help you better under
 
 ### Available Commands:
 - **\\uml**: Create Unified Modeling Language graph, or Class Diagram.
-- **\\flow**: Create a sequence, state, or user journey Diagram.
+- **\\flow**: Create a sequence Diagram.
 - **\\iterate**: To be called when you already have a diagram up to refine, add, and change the existing diagram.
 
 Good luck and happy diagramming!
@@ -159,7 +159,6 @@ Good luck and happy diagramming!
         }
 
         // -- Handle parse error
-
         logMessage(`Not successful (on retry=${++retries})`);
         if (retries === 1) {
             addNestingContext(toVsCodeChatMessages(messages));

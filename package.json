@@ -40,8 +40,8 @@
             "description": "Generate a UML diagram"
           },
           {
-            "name": "flow",
-            "description": "Generate sequence, state, or user journey diagrams"
+            "name": "sequence",
+            "description": "Generate a sequence diagram"
           },
           {
             "name": "iterate",
