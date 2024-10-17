@@ -279,14 +279,14 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 						</UserMessage>
 					</>
 				);
-			case 'flow':
+			case 'sequence':
 				return (
 					<UserMessage>
-						Please create a mermaid sequence diagram, state diagram, or user journey diagram. The diagram should include all relevant steps to describe the behaviors, actions, and steps of the users code.
-						You should select whichever of the three diagram types is most appropriate for the given context, create that diagram, then return it.
-						sequence diagram: model the interactions between different parts of a system in a time-sequenced manner
-						state diagram: show the different states of an object or system, and the transitions between those states
-						user journey diagram: show the steps a user goes through to accomplish a goal, including interactions with a software system
+						Please create a mermaid sequence diagram. The diagram should include all relevant steps to describe the behaviors, actions, and steps in the user's code.
+						Sequence diagrams model the interactions between different parts of a system in a time-sequenced manner. There are participants which represent entities in
+						the system. These actors can have aliases, be group and be deactivated.
+						Mermaid sequence diagrams also support loops, alternative routes, parallel actions, breaks in flow, notes/comments and more.
+						Use all of these features to best represent the users code and add in notes and comments to provide explanation.
 						As always, end your message with the diagram.
 					</UserMessage>
 				);
