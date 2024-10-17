@@ -23,5 +23,8 @@
 #drag-handle {
     cursor: move;
     z-index: 2;
- }
+}
 
+.clickable .nodeLabel {
+    text-decoration: underline;
+}

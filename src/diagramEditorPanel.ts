@@ -78,6 +78,17 @@ export class DiagramEditorPanel {
 						logMessage(`(Chat) Parse Result: ${JSON.stringify(message)}`);
 						this.parseDetails = message;
 						break;
+					case 'navigate':
+						const decoded = decodeURI(message.path);
+						const fragment = message.line.indexOf('L') === 0 ? message.line : `L${message.line}`;
+						const uri = vscode.Uri.from({
+							scheme: 'file',
+							path: decoded,
+							fragment,
+						});
+
+						vscode.commands.executeCommand('vscode.open', uri);
+						break;
 				}
 			},
 			null,
@@ -193,7 +204,7 @@ export class DiagramEditorPanel {
 					import mermaid from '${mermaidUri}';
 
 					const diagram = \`
-					${diagram.content}
+						${diagram.content}
 					\`;
 
 					mermaid.parseError = function (err, hash) {
