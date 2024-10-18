@@ -63,7 +63,7 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 					adding adding the following syntax to the end of the line: <br />
 					click ItemLabel call linkCallback(ItemFilePath#LineNumber) <br />
 					where ItemLabel is the label in the diagram and ItemFilePath and LineNumber 
-					are the location of the item.
+					are the location of the item, but leave off the line number if you are unsure. <br />
 					- Make sure to only use the \`/\` character as a path separator in the links. 
 					<br />
 					- Do not add anything to the response past the closing \`\`\` delimiter or 

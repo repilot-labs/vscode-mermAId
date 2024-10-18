@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { Diagram } from './diagram';
 import { logMessage } from './extension';
-import { parse } from 'path';
 import { DiagramDocument } from './diagramDocument';
 
 export interface WebviewResources {
@@ -24,6 +23,7 @@ export class DiagramEditorPanel {
 	private readonly _panel: vscode.WebviewPanel;
 	private parseDetails: { success: boolean, error: string } | undefined = undefined;
 	private _disposables: vscode.Disposable[] = [];
+	private absolutePathRegex = new RegExp('^([a-zA-Z]:)?[\\/\\\\]');
 
 	get diagram() {
 		return this._diagram;
@@ -76,9 +76,19 @@ export class DiagramEditorPanel {
 					case 'navigate':
 						const decoded = decodeURI(message.path);
 						const line = parseInt(message.line.replace('L', ''), 10);
+
+						let filepath = decoded;
+						if (!this.absolutePathRegex.test(decoded)) {
+							const workspaceFolders = vscode.workspace.workspaceFolders;
+							if (workspaceFolders) {
+								const workspace = workspaceFolders[0].uri;
+								filepath = vscode.Uri.joinPath(workspace, decoded).path;
+							}
+						}
+
 						const uri = vscode.Uri.from({
 							scheme: 'file',
-							path: decoded,
+							path: filepath,
 							fragment: `L${line}`,
 						});
 
