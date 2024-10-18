@@ -1,8 +1,11 @@
 import * as vscode from 'vscode';
 import { logMessage } from './extension';
+import Groq from 'groq-sdk';
+import { ChatCompletionChunk, ChatCompletionMessageParam, ChatCompletionTool, ChatCompletionToolMessageParam, ChatCompletionUserMessageParam } from 'groq-sdk/resources/chat/completions.mjs';
+import { Stream } from 'groq-sdk/lib/streaming.mjs';
 
 // Groq client
-let groq: any;
+let groq: Groq;
 // flag to check if Groq is enabled
 export let groqEnabled = false;
 /**
@@ -15,7 +18,6 @@ export let groqEnabled = false;
  * @param context - The VS Code extension context which provides access to secrets storage and other extension resources.
  */
 export function registerGroqTool(context: vscode.ExtensionContext) {
-    const Groq = require('groq-sdk');
      context.secrets.get('groq-api-key').then((apiKey) => {
            if (apiKey) {
                logMessage('Retrieved Groq API key, will use groq for outline view diagram generation.');
@@ -28,23 +30,48 @@ export function registerGroqTool(context: vscode.ExtensionContext) {
 }
 
 
-export class GroqChatResponse implements vscode.LanguageModelChatResponse {
+export class GroqChatResponse {
     // seems like it needs both string and text but they represent the same thing?
-    public text: AsyncIterable<string>;
-    public stream: AsyncIterable<string>;
-    constructor(text: AsyncIterable<string>) {
+    public text:Stream<ChatCompletionChunk>;
+    public stream: Stream<ChatCompletionChunk>;
+    constructor(text: Stream<ChatCompletionChunk>) {
         this.text = text;
         this.stream = text;
     }
 }
 
-export function convertMessagesToGroq(messages: vscode.LanguageModelChatMessage[]): {role: string, content: string}[] {
+class GroqChatUserMessage implements ChatCompletionUserMessageParam {
+    public content: string;
+    role: 'user';
+    constructor(content: string) {
+        this.content = content;
+        this.role = 'user';
+    }
+}
+
+class GroqChatToolMessage implements ChatCompletionToolMessageParam {
+    public content: string;
+    role: 'tool';
+    public tool_call_id;
+    constructor(content: string, tool_call_id: string) {
+        this.content = content;
+        this.role = 'tool';
+        this.tool_call_id = tool_call_id;
+    } // maybe tool_call_id
+}
+
+export function convertMessagesToGroq(messages: (vscode.LanguageModelChatMessage|vscode.LanguageModelToolCallPart)[]): ChatCompletionMessageParam[] {
     const groqMessages = [];
     for (const message of messages) {
-        if (message.role === 1) {
-            groqMessages.push({role:"user", content:message.content});
-        } else if (message.role === 2) {
-            groqMessages.push({role:"assistant", content:message.content});
+        if (message instanceof vscode.LanguageModelChatMessage) {
+            groqMessages.push(new GroqChatUserMessage(message.content));
+            if (message.content2 && message.content2 instanceof vscode.LanguageModelChatMessage) {
+                // add in tool call response
+                const r = message.content2;
+                groqMessages.push(new GroqChatUserMessage(r.content));
+            }
+        } else if (message instanceof vscode.LanguageModelToolCallPart) {
+            groqMessages.push(new GroqChatToolMessage(message.name, message.toolCallId));
         }
     }
     return groqMessages;
@@ -85,7 +112,7 @@ things to note:
 Thank you!`));
     const groqMessages = convertMessagesToGroq(messages);
 
-    const tools = [
+    const tools: ChatCompletionTool[] = [
         {
             type: "function",
             function: {
@@ -114,7 +141,7 @@ Thank you!`));
 
 
 
-    const chatCompletion: AsyncIterable<string> = await groq.chat.completions.create({
+    const chatCompletion: Stream<ChatCompletionChunk> = await groq.chat.completions.create({
         "messages": groqMessages,
         "model": "llama3-groq-70b-8192-tool-use-preview",
         "temperature": 1,
