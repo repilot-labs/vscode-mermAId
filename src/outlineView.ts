@@ -276,8 +276,20 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             logMessage(mermaidDiagram);
     
             // Validate the diagram
-            const candidateNextDiagram = new Diagram(mermaidDiagram);
-            const result = await this.validate(candidateNextDiagram, cancellationToken);
+            let result;
+            let candidateNextDiagram = undefined;
+            if (mermaidDiagram.length === 0) {
+                // Diagram isn't valid if it is empty, no need to try and parse it, give better error back to model
+                result = { success: false, error: "Empty diagram" };
+                messages.push(vscode.LanguageModelChatMessage.User(`The diagram is empty, please retry`));
+                // this may occur if groq reached max tokens, so disable groq as a fallback
+                localGroqEnabled = false;
+                messages.push(vscode.LanguageModelChatMessage.User(`diagram returned was empty (turning off groq if on)`));
+            } else {
+                candidateNextDiagram = new Diagram(mermaidDiagram);
+                result = await this.validate(candidateNextDiagram, cancellationToken);
+            }
+             
 
             if (result.success) {
                 logMessage("Outline generation and validation success");
@@ -303,17 +315,9 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         return result;
                     }
                 }
-
-                // --- Try to point our error and reprompt LLM to fix
-
-                if (result.error.includes('STRUCT_STOP')) {
-                    // If the parse error is a missing closing parenthesis, specify that in the message
-                    messages.push(vscode.LanguageModelChatMessage.User(`The diagram was almost right, just make sure all open parentheses (or similar) are closed.`));
+                if (candidateNextDiagram) {
+                    messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
                 }
-
-                messages.push(vscode.LanguageModelChatMessage.User(result.friendlyError ?? `The generated diagram was not valid, please correct the errors and try again. Error: ${result.error}`));
-                messages.push(vscode.LanguageModelChatMessage.User(`The complete diagram with the parse error is:\n${candidateNextDiagram.content}`));
-
                 if (retries === 2) {
                     // Disable groq for the third retry since OpenAI can be more dependable
                     logMessage('Disabling groq for the third retry');
