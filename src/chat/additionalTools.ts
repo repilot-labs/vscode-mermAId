@@ -1,9 +1,14 @@
 import * as vscode from 'vscode';
 import { logMessage } from '../extension';
+import { log } from 'console';
 
 interface IGetSymbolDefinition {
     symbols: string[];
-    fileString?: string;
+    fileString: string;
+}
+
+interface IGatherSymbolInfo {
+    symbols: string[];
 }
 
 interface ISymbolInfo {
@@ -26,20 +31,20 @@ const symbolMapping: Map<number, string> = new Map([
 
 export function registerChatTool(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        vscode.lm.registerTool(
-            'mermAId_get_symbol_definition',
-            new GetSymbolDefinitionTool()
-        )
+        vscode.lm.registerTool('mermAId_get_symbol_definition', new GetSymbolDefinitionTool())
+    );
+    context.subscriptions.push(
+        vscode.lm.registerTool('mermAId_gather_symbols', new GatherSymbolInfoTool())
     );
 }
 
-export class GetSymbolDefinitionTool
+class GetSymbolDefinitionTool
     implements vscode.LanguageModelTool<IGetSymbolDefinition> {
     async invoke(
         options: vscode.LanguageModelToolInvocationOptions<IGetSymbolDefinition>,
         token: vscode.CancellationToken
     ) {
-        const params = options.parameters as IGetSymbolDefinition;
+        const params = options.parameters;
         const currentFilePath = params.fileString;
         const resultMap: Map<string, string> = new Map();
         const errors: string[] = [];
@@ -47,6 +52,9 @@ export class GetSymbolDefinitionTool
         logMessage('mermAId_get_symbol_definition invoked with symbols: ' + params.symbols.toString() + ' in file: ' + currentFilePath);
 
         for (const symbol of params.symbols) {
+            if (token.isCancellationRequested) {
+                return;
+            }
             let symbolInfo: ISymbolInfo | undefined;
             try {
                 // see if we can get the full symbol info
@@ -57,14 +65,17 @@ export class GetSymbolDefinitionTool
                 } else if (currentFilePath) {
                     // just look for the first occurence of the text in the provided file
                     const document = await vscode.workspace.openTextDocument(currentFilePath);
-                    const { content, range } = getSurroundingContent(document, symbol);
-                    symbolInfo = {
-                        name: symbol,
-                        kind: undefined,
-                        location: { uri: document.uri, range },
-                        parentSymbol: undefined,
-                        content
-                    };
+                    const { content, range } = await getSurroundingContent(document, symbol);
+
+                    if (content && range) {
+                        symbolInfo = {
+                            name: symbol,
+                            kind: undefined,
+                            location: { uri: document.uri, range },
+                            parentSymbol: undefined,
+                            content
+                        };
+                    }
                 }
 
             } catch {
@@ -99,7 +110,79 @@ export class GetSymbolDefinitionTool
     }
 }
 
-async function getFullSymbolInfo(symbol: string, filepath: string | undefined): Promise<ISymbolInfo | undefined> {
+class GatherSymbolInfoTool
+    implements vscode.LanguageModelTool<IGatherSymbolInfo> {
+    async invoke(
+        options: vscode.LanguageModelToolInvocationOptions<IGatherSymbolInfo>,
+        token: vscode.CancellationToken
+    ) {
+        const params = options.parameters;
+        const resultMap: Map<string, string> = new Map();
+        const errors: string[] = [];
+        let finalMessageString = '';
+        logMessage('mermAId_gather_symbols invoked with symbols: ' + params.symbols.toString());
+
+        for (const symbol of params.symbols) {
+            if (token.isCancellationRequested) {
+                return;
+            }
+            let symbolInfo: ISymbolInfo | undefined;
+            try {
+                // see if we can get the full symbol info
+                symbolInfo = await getFullSymbolInfo(symbol);
+                if (symbolInfo) {
+                    const document = await vscode.workspace.openTextDocument(symbolInfo.location.uri);
+                    symbolInfo.content = document.getText(symbolInfo.location.range);
+                } else {
+                    // check the document of the active editor
+                    const document = vscode.window.activeTextEditor?.document;
+                    if (document) {
+                        const { content, range } = await getSurroundingContent(document, symbol);
+                        if (content && range) {
+                            symbolInfo = {
+                                name: symbol,
+                                kind: undefined,
+                                location: { uri: document.uri, range },
+                                parentSymbol: undefined,
+                                content
+                            };
+                        }
+                    }
+                }
+
+            } catch {
+                errors.push(`Error getting definition for ${symbol}`);
+                continue;
+            }
+
+            resultMap.set(symbol, symbolInfo ? prettyPrintSymbol(symbolInfo) : 'Not found');
+        }
+
+        for (const [key, value] of resultMap) {
+            finalMessageString += value;
+        }
+        finalMessageString += 'Errors:\n';
+        for (const error of errors) {
+            logMessage(error);
+            finalMessageString += error + '\n';
+        }
+
+        return {
+            'text/plain': finalMessageString,
+        };
+    }
+
+    async prepareToolInvocation(
+        options: vscode.LanguageModelToolInvocationPrepareOptions<IGetSymbolDefinition>,
+        token: vscode.CancellationToken
+    ) {
+        return {
+            invocationMessage: `Getting definition for '${options.parameters.symbols.join(', ')}'`,
+        };
+    }
+}
+
+async function getFullSymbolInfo(symbol: string, filepath?: string): Promise<ISymbolInfo | undefined> {
     try {
         const refs = await vscode.commands.executeCommand<
             vscode.SymbolInformation[]
@@ -136,17 +219,48 @@ async function getFullSymbolInfo(symbol: string, filepath: string | undefined): 
     return undefined;
 }
 
-function getSurroundingContent(document: vscode.TextDocument, symbolName: string) {
+async function getSurroundingContent(document: vscode.TextDocument, symbolName: string) {
     const text = document.getText();
     const index = text.indexOf(symbolName);
-    const line = document.lineAt(document.positionAt(index).line);
-    const startLine = Math.max(line.lineNumber - 5, 0);
-    const endLine = Math.min(line.lineNumber + 5, document.lineCount - 1);
+    if (index === -1) {
+        return { range: undefined, content: undefined };
+    }
 
-    const range = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).text.length);
-    const content = document.getText(range);
+    const p2: vscode.Position = document.positionAt(index);
+    const definitions: vscode.Location | vscode.LocationLink[] =
+        await vscode.commands.executeCommand<
+            vscode.Location | vscode.LocationLink[]
+        >('vscode.executeDefinitionProvider', document.uri, p2);
 
-    return { range, content };
+    let location: vscode.Location | undefined = undefined;
+    if (Array.isArray(definitions)) {
+
+        for (const definition of definitions) {
+            if (definition instanceof vscode.Location) {
+                location = definition;
+            } else {
+                location = new vscode.Location(definition.targetUri, definition.targetRange);
+            }
+        }
+    } else if (definitions instanceof vscode.Location) {
+        location = definitions;
+    }
+
+    const definitionDoc = location
+        ? await vscode.workspace.openTextDocument(location.uri)
+        : document;
+
+    const line = location?.range.start.line ?? definitionDoc.lineAt(definitionDoc.positionAt(index).line).lineNumber;
+    const end = location?.range.end.line ?? line;
+    const startLine = Math.max(line - 10, 0);
+    const endLine = Math.min(end + 10, definitionDoc.lineCount - 1);
+
+    const range = new vscode.Range(startLine, 0, endLine, definitionDoc.lineAt(endLine).text.length);
+    const content = definitionDoc.getText(range);
+
+    const symbolRange = location ?? range;
+
+    return { symbolRange, content };
 }
 
 function prettyPrintSymbol(symbol: ISymbolInfo) {
@@ -154,7 +268,7 @@ function prettyPrintSymbol(symbol: ISymbolInfo) {
 Symbol: ${symbol.name}
 Kind: ${symbol.kind}
 File: ${symbol.location.uri.fsPath}
-Lines: ${symbol.location.range.start.line + 1}-${symbol.location.range.end.line + 1}
+Lines: ${symbol.location.range.start.line + 1}
 Parent Symbol: ${symbol.parentSymbol}
 Content: ${symbol.content}
 `;

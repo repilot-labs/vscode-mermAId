@@ -69,10 +69,10 @@
       {
         "name": "mermAId_get_symbol_definition",
         "tags": [
-          "editors",
-          "chat-tools-sample"
+          "code",
+          "symbols"
         ],
-        "displayName": "Symbol Definition",
+        "displayName": "Symbol Definitions from File",
         "modelDescription": "Given a file path string and a list of symbols, this model returns the definitions of the specified symbols. For example, if the file 'x.py' is provided and the symbol 'abc' is requested, the model will find 'abc' in 'x.py' and return its definition from the file where it is actually defined, such as 'y.py'.",
         "icon": "$(files)",
         "canBeReferencedInPrompt": false,
@@ -91,6 +91,33 @@
               "type": "string",
               "description": "The path to the file represented as a string where you are finding these symbols you want to get the definition for. Or undefined if the location of the symbol is unknown.",
               "default": "none"
+            }
+          }
+        },
+        "supportedContentTypes": [
+          "text/plain"
+        ]
+      },
+      {
+        "name": "mermAId_gather_symbols",
+        "tags": [
+          "code",
+          "symbols"
+        ],
+        "displayName": "Gather Workspace Symbols",
+        "modelDescription": "This tool will attempt to gather all symbols in the entire workspace and return them in a list including the content of the symbol and the line information.",
+        "icon": "$(files)",
+        "canBeReferencedInPrompt": false,
+        "parametersSchema": {
+          "type": "object",
+          "properties": {
+            "symbols": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of symbols to search for.",
+              "default": []
             }
           }
         },
