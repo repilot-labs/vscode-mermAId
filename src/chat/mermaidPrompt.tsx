@@ -40,40 +40,44 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 		const diagramRef = currentDiagram ?
 			`The diagram: ${currentDiagram.content} is open, so refer to that if it sounds like I'm referring to an existing diagram.` :
 			`There isn't a diagram open that you created.`;
+		const clickableSyntax = 'click {ItemLabel} call linkCallback("{ItemFilePath}#L{LineNumber}")';
+		const clickableSyntaxExample = `click A call linkCallback("myClass.ts#L42")`;
 		return (
 			<>
 				<UserMessage>
 					Instructions: <br />
 					- You are helpful chat assistant that creates diagrams using the 
 					mermaid syntax. <br />
-					- If you aren't sure which tool is relevant, you can call multiple
-					tools. You can call tools repeatedly to take actions or gather as much
-					context as needed until you have completed the task fully. Don't give up
+					- If you aren't sure which tool is relevant and feel like you are missing 
+					context, start by searching the code base to find general information. 
+					You can call tools repeatedly to gather as much context as needed as long 
+					as you call the tool with different arguments each time. Don't give up
 					unless you are sure the request cannot be fulfilled with the tools you
 					have. <br />
-					- Don't make assumptions about the situation- gather context first, then
-					perform the task or answer the question. <br />
 					- Don't ask for confirmation to use tools, just use them. <br />
-					- If you find a symbol you want to get the definition for, like a interface 
-					implemented by a class in the context, use the provided tool <br />
+					- If you find a relevant symbol in the code gather more information about 
+					it with one of the symbols tools. <br />
+					- Use symbol information to find the file path and line number of the
+					symbol so that they can be referenced in the diagram. <br />
 					- The final segment of your response should always be a valid mermaid diagram 
 					prefixed with a line containing  \`\`\`mermaid and suffixed with a line 
 					containing \`\`\`. <br />
 					- If you have the location for an item in the diagram, make it clickable by
 					adding adding the following syntax to the end of the line: <br />
-					click ItemLabel call linkCallback(ItemFilePath#LineNumber) <br />
+					{clickableSyntax} <br />
 					where ItemLabel is the label in the diagram and ItemFilePath and LineNumber 
-					are the location of the item, but leave off the line number if you are unsure. <br />
+					are the location of the item, but leave off the line number if you are unsure. 
+					For example: <br />
+					{clickableSyntaxExample} <br />
 					- Make sure to only use the \`/\` character as a path separator in the links. 
 					<br />
 					- Do not add anything to the response past the closing \`\`\` delimiter or 
 					we won't be able to parse the response correctly. <br />
 					- The \`\`\` delimiter should only occur in the two places mentioned above.
 				</UserMessage>
-				<RequestCommand commandName={this.props.command ?? ''}></RequestCommand>
-				<History context={this.props.context} priority={10}></History>
 				<UserMessage>{docRef}</UserMessage>
 				<UserMessage>{diagramRef}</UserMessage>
+				<RequestCommand commandName={this.props.command ?? ''}></RequestCommand>
 				<PromptReferences
 					references={this.props.request.references}
 					priority={20}

@@ -65,7 +65,7 @@ class GetSymbolDefinitionTool
                 } else if (currentFilePath) {
                     // just look for the first occurence of the text in the provided file
                     const document = await vscode.workspace.openTextDocument(currentFilePath);
-                    const { content, range } = await getSurroundingContent(document, symbol);
+                    const { content, range } = await getSymbolContent(document, symbol);
 
                     if (content && range) {
                         symbolInfo = {
@@ -137,7 +137,7 @@ class GatherSymbolInfoTool
                     // check the document of the active editor
                     const document = vscode.window.activeTextEditor?.document;
                     if (document) {
-                        const { content, range } = await getSurroundingContent(document, symbol);
+                        const { content, range } = await getSymbolContent(document, symbol);
                         if (content && range) {
                             symbolInfo = {
                                 name: symbol,
@@ -219,48 +219,61 @@ async function getFullSymbolInfo(symbol: string, filepath?: string): Promise<ISy
     return undefined;
 }
 
-async function getSurroundingContent(document: vscode.TextDocument, symbolName: string) {
+async function getSymbolContent(document: vscode.TextDocument, symbolName: string) {
     const text = document.getText();
     const index = text.indexOf(symbolName);
     if (index === -1) {
         return { range: undefined, content: undefined };
     }
 
-    const p2: vscode.Position = document.positionAt(index);
+    const position: vscode.Position = document.positionAt(index);
     const definitions: vscode.Location | vscode.LocationLink[] =
         await vscode.commands.executeCommand<
             vscode.Location | vscode.LocationLink[]
-        >('vscode.executeDefinitionProvider', document.uri, p2);
+        >('vscode.executeDefinitionProvider', document.uri, position);
 
-    let location: vscode.Location | undefined = undefined;
+    let definitionLocation: vscode.Location | undefined = undefined;
     if (Array.isArray(definitions)) {
 
         for (const definition of definitions) {
             if (definition instanceof vscode.Location) {
-                location = definition;
+                definitionLocation = definition;
             } else {
-                location = new vscode.Location(definition.targetUri, definition.targetRange);
+                definitionLocation = new vscode.Location(definition.targetUri, definition.targetRange);
             }
         }
     } else if (definitions instanceof vscode.Location) {
-        location = definitions;
+        definitionLocation = definitions;
     }
 
-    const definitionDoc = location
-        ? await vscode.workspace.openTextDocument(location.uri)
-        : document;
+    // try to get the content from where the symbol is defined
+    if (definitionLocation) {
+        const definitionDoc = await vscode.workspace.openTextDocument(definitionLocation.uri);
+        const content = getSurroundingContent(definitionDoc, definitionLocation.range, symbolName);
 
-    const line = location?.range.start.line ?? definitionDoc.lineAt(definitionDoc.positionAt(index).line).lineNumber;
-    const end = location?.range.end.line ?? line;
-    const startLine = Math.max(line - 10, 0);
-    const endLine = Math.min(end + 10, definitionDoc.lineCount - 1);
+        return { symbolRange: definitionLocation.range, content };
+    }
 
-    const range = new vscode.Range(startLine, 0, endLine, definitionDoc.lineAt(endLine).text.length);
-    const content = definitionDoc.getText(range);
-
-    const symbolRange = location ?? range;
+    // Get the surrounding content from the specified document
+    const symbolRange = new vscode.Range(position, position);
+    const content = getSurroundingContent(document, symbolRange, symbolName);
 
     return { symbolRange, content };
+}
+
+function getSurroundingContent(document: vscode.TextDocument, range: vscode.Range, symbolName: string) {
+    const line = range.start.line;
+    const end = range.end.line;
+    const startLine = Math.max(line - 10, 0);
+    const endLine = Math.min(end + 10, document.lineCount - 1);
+
+    const contentRange = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).text.length);
+    const content = document.getText(contentRange);
+    if (content.includes(symbolName)) {
+        return content;
+    }
+
+    return undefined;
 }
 
 function prettyPrintSymbol(symbol: ISymbolInfo) {
@@ -268,7 +281,7 @@ function prettyPrintSymbol(symbol: ISymbolInfo) {
 Symbol: ${symbol.name}
 Kind: ${symbol.kind}
 File: ${symbol.location.uri.fsPath}
-Lines: ${symbol.location.range.start.line + 1}
+Lines: ${symbol.location.range.start.line}
 Parent Symbol: ${symbol.parentSymbol}
 Content: ${symbol.content}
 `;
