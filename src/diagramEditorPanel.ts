@@ -237,7 +237,8 @@ export class DiagramEditorPanel {
 						vscode.postMessage({
 							command: 'parse-result',
 							success: false,
-							error: JSON.stringify(err)
+							error: JSON.stringify(err),
+							diagram,
 						});
 					};
 					const diagramType = await mermaid.parse(diagram);

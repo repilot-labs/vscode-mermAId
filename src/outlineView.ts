@@ -5,6 +5,7 @@ import { Diagram } from './diagram';
 import { DiagramEditorPanel, WebviewResources } from './diagramEditorPanel';
 import { DiagramDocument } from './diagramDocument';
 import { groqEnabled, callWithGroq as sendGroqRequest } from './groqHandler';
+import { formatMermaidErrorToNaturalLanguage } from './mermaidHelpers';
 
 const llmInstructions = `
 You are helpful chat assistant that creates diagrams for the user using the mermaid syntax.
@@ -70,7 +71,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 
     private _view?: vscode.WebviewView;
     private _webviewResources?: WebviewResources;
-    private parseDetails: { success: boolean, error: string } | undefined = undefined;
+    private parseDetails: {success: true } | { success: false; error: string; friendlyError?: string } | undefined = undefined;
     private _diagram?: Diagram;
 
     public async generateOutlineDiagram(cancellationToken: vscode.CancellationToken) {
@@ -118,7 +119,13 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 						break;
 					case 'parse-result':
 						logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
-						this.parseDetails = message;
+                        const friendlyError: string | undefined = formatMermaidErrorToNaturalLanguage(message);
+                        // Setting this field will move state forward
+						this.parseDetails = {
+                            success: message.success ?? false,
+                            error: message?.error,
+                            friendlyError
+                        };
 						break;
                     case 'open-in-window':
                         if (!this._diagram) {
@@ -281,20 +288,32 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 
             logMessage(`Outline generation not success (on retry ${++retries})`); // seen some with diagram = ```
             if (retries < 4) {
+
+                // --- Try to manually fix
+
                 // check for inner braces error, remove if exists
                 const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
                 const regexMatches = mermaidDiagram.match(regex);
                 if (regexMatches?.length && regexMatches.length > 0) {
                     const diagram = removeInnerBracesAndContent(mermaidDiagram);
                     const candidateNextDiagram = new Diagram(diagram);
-                    const result = await this.validate(candidateNextDiagram, cancellationToken);
-
-                    if (result.success) {
+                    const { success } = await this.validate(candidateNextDiagram, cancellationToken);
+                    if (success) {
                         logMessage("Outline generation and validation success");
                         return result;
                     }
                 }
-                messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
+
+                // --- Try to point our error and reprompt LLM to fix
+
+                if (result.error.includes('STRUCT_STOP')) {
+                    // If the parse error is a missing closing parenthesis, specify that in the message
+                    messages.push(vscode.LanguageModelChatMessage.User(`The diagram was almost right, just make sure all open parentheses (or similar) are closed.`));
+                }
+
+                messages.push(vscode.LanguageModelChatMessage.User(result.friendlyError ?? `The generated diagram was not valid, please correct the errors and try again. Error: ${result.error}`));
+                messages.push(vscode.LanguageModelChatMessage.User(`The complete diagram with the parse error is:\n${candidateNextDiagram.content}`));
+
                 if (retries === 2) {
                     // Disable groq for the third retry since OpenAI can be more dependable
                     logMessage('Disabling groq for the third retry');
@@ -309,7 +328,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         return await runWithTools();
     }
 
-    private async validate(candidateNextDiagram: Diagram, cancellationToken: vscode.CancellationToken): Promise<{ success: true } | { success: false, error: string }> {
+    private async validate(candidateNextDiagram: Diagram, cancellationToken: vscode.CancellationToken): Promise<{ success: true } | { success: false, error: string; friendlyError?: string }> {
         if (cancellationToken.isCancellationRequested) {
             return { success: false, error: 'Cancelled' };
         }
@@ -320,7 +339,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         }
         this._view.webview.html = DiagramEditorPanel.getHtmlToValidateMermaid(this._view.webview, candidateNextDiagram);
         // wait for parseDetails to be set via message posted from webview
-        return new Promise<{ success: true } | { success: false, error: string }>((resolve) => {
+        return new Promise<{ success: true } | { success: false; error: string; friendlyError?: string }>((resolve) => {
             const interval = setInterval(() => {
                 if (this.parseDetails !== undefined) {
                     clearInterval(interval);
