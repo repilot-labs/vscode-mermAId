@@ -4,6 +4,7 @@ import { registerChatTool } from "./chat/additionalTools";
 import { registerOutlineView } from './outlineView';
 import { registerCommands } from './commands';
 import { CodelensProvider } from './codeLensProvider';
+import { registerGroqTool } from './groqHandler';
 
 const outputChannel = vscode.window.createOutputChannel('mermAId');
 export function logMessage(message: string) {
@@ -17,6 +18,23 @@ export function activate(context: vscode.ExtensionContext) {
     registerChatTool(context);
     registerCommands();
     vscode.languages.registerCodeLensProvider("*", new CodelensProvider());
+
+
+    // Register the command to store the Groq API key
+    let storeSecretCommand = vscode.commands.registerCommand('copilot-mermaid-diagram.storeSecret', async () => {
+        const secret = await vscode.window.showInputBox({ prompt: 'Enter your Groq API key' });
+        if (secret) {
+            // Store the secret in the global state, call to registerGroqTool to pass the api key to the Groq client
+            await context.secrets.store('groq-api-key', secret);
+            vscode.window.showInformationMessage('Groq API key stored successfully');
+            registerGroqTool(context);
+        }
+    });
+
+    context.subscriptions.push(storeSecretCommand);
+
+    // register the Groq tool in case the user has already stored the API key
+    registerGroqTool(context);
 }
 
 export function deactivate() {
