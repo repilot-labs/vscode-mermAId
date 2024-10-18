@@ -53,25 +53,34 @@ export function convertMessagesToGroq(messages: vscode.LanguageModelChatMessage[
 
 export async function callWithGroq(messages: vscode.LanguageModelChatMessage[]): Promise<GroqChatResponse>{
     
-    messages.push(vscode.LanguageModelChatMessage.User(`For Groq specifically, follow these formatting rules strictly:
+    messages.push(vscode.LanguageModelChatMessage.User(`
+Your goal is to create a comprehensive class diagram using mermaid based on the file attached as context.
+The class diagram you create will be used to outline this code file in the VS Code outline view.
+Start by making sure you understand the symbols in the file. You should try to call the "mermAId_get_symbol_definition" tool to get more information about symbols found in the file you do not understand.
+Then create a class diagram based on the symbols you have found in the file make sure to add all associations/relationships between classes.
+        
+Follow these formatting rules strictly:
 
 1. Use triple backticks (\`\`\`) to enclose any Mermaid diagrams.
 2. Always specify the language as 'mermaid' right after the first set of backticks, like this: \`\`\`mermaid.
-3. Only include the Mermaid diagram itself, with **no additional text** outside the diagram. Only include **one** mermaid diagram per response.
+3. Only include **one** mermaid diagram per response.
 4. The diagram should be a **class diagram** and nothing else.
 
 Example:
 \`\`\`mermaid
 classDiagram
-class DiscoveredTestPayload {
+ClassDesignA : +String owner
+class ClassDesignB {
     +cwd: string
     +status: "success"
     }
 
-DiscoveredTestPayload <|-- ClassB
+ClassDesignB <|-- ClassB
 \`\`\`
 
-all open { symbols in the diagram must have a close } symbol when defining classes.
+things to note:
+- all open { symbols in the diagram must have a close } symbol
+- mermaid does not support nested class definitions
 
 Thank you!`));
     const groqMessages = convertMessagesToGroq(messages);
@@ -119,3 +128,4 @@ Thank you!`));
     return new GroqChatResponse(chatCompletion);
 
 }
+// Only include the Mermaid diagram itself, with **no additional text** outside the diagram. 
