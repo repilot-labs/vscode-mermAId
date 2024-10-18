@@ -20,13 +20,13 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeLensProvider("*", new CodelensProvider());
 
 
-    // Register the command to store the Groq API key
+    // Register the command to store the groq API key
     let storeSecretCommand = vscode.commands.registerCommand('copilot-mermaid-diagram.storeSecret', async () => {
-        const secret = await vscode.window.showInputBox({ prompt: 'Enter your Groq API key' });
+        const secret = await vscode.window.showInputBox({ prompt: 'Enter your groq API key' });
         if (secret) {
-            // Store the secret in the global state, call to registerGroqTool to pass the api key to the Groq client
+            // Store the secret in the global state, call to registerGroqTool to pass the api key to the groq client
             await context.secrets.store('groq-api-key', secret);
-            vscode.window.showInformationMessage('Groq API key stored successfully');
+            vscode.window.showInformationMessage('groq API key stored successfully');
             registerGroqTool(context);
         }
     });

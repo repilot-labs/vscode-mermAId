@@ -9,10 +9,10 @@ let groq: Groq;
 // flag to check if Groq is enabled
 export let groqEnabled = false;
 /**
- * Registers the Groq tool within the given VS Code extension context.
+ * Registers the groq tool within the given VS Code extension context.
  * 
- * This function retrieves the Groq API key from the extension's secrets storage.
- * If the API key is found, it initializes the Groq SDK with the API key and enables Groq functionality.
+ * This function retrieves the groq API key from the extension's secrets storage.
+ * If the API key is found, it initializes the groq SDK with the API key and enables groq functionality.
  * If the API key is not found, it logs a message and defaults to using only OpenAI.
  * 
  * @param context - The VS Code extension context which provides access to secrets storage and other extension resources.
@@ -20,11 +20,11 @@ export let groqEnabled = false;
 export function registerGroqTool(context: vscode.ExtensionContext) {
      context.secrets.get('groq-api-key').then((apiKey) => {
            if (apiKey) {
-               logMessage('Retrieved Groq API key, will use groq for outline view diagram generation.');
+               logMessage('Retrieved groq API key, will use groq for outline view diagram generation.');
                groq = new Groq({apiKey:apiKey});
                groqEnabled = true;
            } else {
-                logMessage('No Groq API key found, defaulting to using only OpenAI.');
+                logMessage('No groq API key found, defaulting to using only OpenAI.');
            }
        });
 }
@@ -57,7 +57,7 @@ class GroqChatToolMessage implements ChatCompletionToolMessageParam {
         this.content = content;
         this.role = 'tool';
         this.tool_call_id = tool_call_id;
-    } // maybe tool_call_id
+    }
 }
 
 export function convertMessagesToGroq(messages: (vscode.LanguageModelChatMessage|vscode.LanguageModelToolCallPart)[]): ChatCompletionMessageParam[] {

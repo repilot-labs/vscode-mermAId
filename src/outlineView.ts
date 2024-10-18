@@ -167,7 +167,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`),
         ];
 
-        // A flag to enable Groq if API key is present      
+        // A flag to enable groq if API key is present      
         let localGroqEnabled = groqEnabled;
         if (groqEnabled) {
             // If api key is present, also check the setting
@@ -296,8 +296,8 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 }
                 messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
                 if (retries === 2) {
-                    // Disable Groq for the third retry since OpenAI can be more dependable
-                    logMessage('Disabling Groq for the third retry');
+                    // Disable groq for the third retry since OpenAI can be more dependable
+                    logMessage('Disabling groq for the third retry');
                     localGroqEnabled = false;
                 }
                 return runWithTools();
