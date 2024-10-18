@@ -167,8 +167,18 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`),
         ];
 
-        // A flag to enable Groq if API key is present
+        // A flag to enable Groq if API key is present      
         let localGroqEnabled = groqEnabled;
+        if (groqEnabled) {
+            // If api key is present, also check the setting
+            const setting = vscode.workspace.getConfiguration('mermaid').get('groqEnabled');
+            if (setting === false) {
+                // if setting turns off groq, do so in extension
+                localGroqEnabled = false;
+            }
+            // otherwise keep it on
+        }
+        
     
         // Recursive
         let retries = 0;
@@ -184,7 +194,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             if (localGroqEnabled) {
                 response = await sendGroqRequest(messages);
             } else {
-                    response = await model.sendRequest(messages, options, cancellationToken);
+                response = await model.sendRequest(messages, options, cancellationToken);
             }
             // Loop for reading response from the LLM
             for await (let part of response.stream) {
@@ -255,7 +265,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 }
             } // done with stream loop
     
-            logMessage(`Received candidate mermaid outline for file: ${mermaidDiagram}`);
+            logMessage(`Received candidate mermaid outline, moving to validation, for file: ${mermaidDiagram}`);
             logMessage(mermaidDiagram);
     
             // Validate the diagram
@@ -263,19 +273,28 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             const result = await this.validate(candidateNextDiagram, cancellationToken);
 
             if (result.success) {
+                logMessage("Outline generation and validation success");
                 return result;
             }
 
             //  -- Handle parse error
 
-            logMessage(`Outline generation not success (on retry ${++retries})`);
+            logMessage(`Outline generation not success (on retry ${++retries})`); // seen some with diagram = ```
             if (retries < 4) {
-                if (result.error.includes('STRUCT_STOP')) {
-                    // If the parse error is a missing closing parenthesis, specify that in the message
-                    messages.push(vscode.LanguageModelChatMessage.User(`The diagram was almost right, just make sure all open parentheses are closed. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
-                } else {
-                    messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
+                // check for inner braces error, remove if exists
+                const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
+                const regexMatches = mermaidDiagram.match(regex);
+                if (regexMatches?.length && regexMatches.length > 0) {
+                    const diagram = removeInnerBracesAndContent(mermaidDiagram);
+                    const candidateNextDiagram = new Diagram(diagram);
+                    const result = await this.validate(candidateNextDiagram, cancellationToken);
+
+                    if (result.success) {
+                        logMessage("Outline generation and validation success");
+                        return result;
+                    }
                 }
+                messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
                 if (retries === 2) {
                     // Disable Groq for the third retry since OpenAI can be more dependable
                     logMessage('Disabling Groq for the third retry');
@@ -425,3 +444,12 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     constructor(private readonly context: vscode.ExtensionContext) { }
 
 }
+
+function removeInnerBracesAndContent(str: string) {
+  // Match the pattern of double nested curly braces and their contents
+  const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
+
+  // Replace the entire match with an empty string, effectively removing it
+  return str.replace(regex, '');
+}
+

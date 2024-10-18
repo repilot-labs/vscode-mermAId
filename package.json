@@ -24,6 +24,11 @@
           "type": "boolean",
           "default": true,
           "description": "Search for mermaid extensions when viewing mermaid source."
+        },
+        "mermaid.enableGroq": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable using Groq for the outline view, requires entering API key from command palette to use."
         }
       }
     },
