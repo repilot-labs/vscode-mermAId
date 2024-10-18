@@ -186,17 +186,17 @@
       {
         "command": "copilot-mermAId-diagram.refresh-outline",
         "title": "Refresh",
-        "icon": "./assets/refresh.svg"
+        "icon": "$(refresh)"
       },
       {
         "command": "copilot-mermAId-diagram.enable-follow-outline",
         "title": "Enable Follow",
-        "icon": "./assets/pin.svg"
+        "icon": "$(pin)"
       },
       {
         "command": "copilot-mermAId-diagram.disable-follow-outline",
         "title": "Disable Follow",
-        "icon": "./assets/pinned.svg"
+        "icon": "$(pinned)"
       },
       {
         "command": "mermAId.openDiagramSvg",
