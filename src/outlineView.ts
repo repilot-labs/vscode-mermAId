@@ -71,7 +71,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 
     private _view?: vscode.WebviewView;
     private _webviewResources?: WebviewResources;
-    private parseDetails: {success: true } | { success: false; error: string; friendlyError?: string } | undefined = undefined;
+    private parseDetails: { success: true } | { success: false; error: string; friendlyError?: string } | undefined = undefined;
     private _diagram?: Diagram;
 
     public async generateOutlineDiagram(cancellationToken: vscode.CancellationToken) {
@@ -107,26 +107,26 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         };
 
         this._view.webview.onDidReceiveMessage(
-			async message => {
-				switch (message.command) {
+            async message => {
+                switch (message.command) {
                     case 'mermaid-source':
                         if (!this._diagram) {
                             logMessage('UNEXPECTED: No diagram found to show source');
                             return;
                         }
-						await DiagramDocument.createAndShow(this._diagram);
-						// this.checkForMermaidExtensions();
-						break;
-					case 'parse-result':
-						logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
+                        await DiagramDocument.createAndShow(this._diagram);
+                        // this.checkForMermaidExtensions();
+                        break;
+                    case 'parse-result':
+                        logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
                         const friendlyError: string | undefined = formatMermaidErrorToNaturalLanguage(message);
                         // Setting this field will move state forward
-						this.parseDetails = {
+                        this.parseDetails = {
                             success: message.success ?? false,
                             error: message?.error,
                             friendlyError
                         };
-						break;
+                        break;
                     case 'open-in-window':
                         if (!this._diagram) {
                             logMessage('UNEXPECTED: No diagram found to open in window');
@@ -136,10 +136,10 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         break;
                     default:
                         logMessage(`(Outline) Unhandled message: ${JSON.stringify(message)}`);
-				}
-			},
-			null,
-		);
+                }
+            },
+            null,
+        );
 
         this.setLandingPage();
     }
@@ -168,7 +168,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         if (cancellationToken.isCancellationRequested) {
             return { success: false, error: 'Cancelled' };
         }
-    
+
         const messages = [
             vscode.LanguageModelChatMessage.Assistant(llmInstructions),
             vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`),
@@ -185,18 +185,18 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             }
             // otherwise keep it on
         }
-        
-    
+
+
         // Recursive
         let retries = 0;
         const runWithTools = async () => {
             const toolCalls: IToolCall[] = [];
             let mermaidDiagram = '';
-    
+
             if (cancellationToken.isCancellationRequested) {
                 return { success: false, error: 'Cancelled' };
             }
-    
+
             let response;
             if (localGroqEnabled) {
                 response = await sendGroqRequest(messages);
@@ -205,7 +205,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             }
             // Loop for reading response from the LLM
             for await (let part of response.stream) {
-                if (part !== null && 'choices' in (part as any)){
+                if (part !== null && 'choices' in (part as any)) {
                     // This is a hack to get around Groq return style and convert it the desired shape
                     try {
                         const justDelta = (part as any).choices[0]?.delta;
@@ -224,7 +224,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                             const id = toolCall[0].id;
                             part = new vscode.LanguageModelToolCallPart(toolName, id, argsParsed);
                         }
-                        
+
                     } catch (e) {
                         console.log(e);
                     }
@@ -238,43 +238,42 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         throw new Error(`Tool ${part.name} invalid`);
                     }
                     const parameters = part.parameters;
-    
-                    const requestedContentType = 'text/plain';
+
                     toolCalls.push({
                         call: part,
                         result: vscode.lm.invokeTool(toolUsed.name,
                             {
                                 parameters,
                                 toolInvocationToken: undefined,
-                                requestedContentTypes: [requestedContentType]
                             }, cancellationToken),
                         tool: toolUsed
                     });
                 }
-    
+
                 // if any tools were used, add them to the context and re-run the query
                 if (toolCalls.length) {
                     const assistantMsg = vscode.LanguageModelChatMessage.Assistant('');
-                    assistantMsg.content2 = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.name, toolCall.call.toolCallId, toolCall.call.parameters));
+                    assistantMsg.content2 = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.name, toolCall.call.callId, toolCall.call.parameters));
                     messages.push(assistantMsg);
                     for (const toolCall of toolCalls) {
                         // NOTE that the result of calling a function is a special content type of a USER-message
                         const message = vscode.LanguageModelChatMessage.User('');
-                        message.content2 = [new vscode.LanguageModelToolResultPart(toolCall.call.toolCallId, (await toolCall.result)['text/plain']!)];
+                        const tooolResult = await toolCall.result;
+                        message.content2 = [new vscode.LanguageModelToolResultPart(toolCall.call.callId, [tooolResult])];
                         messages.push(message);
                     }
-    
+
                     // IMPORTANT The prompt must end with a USER message (with no tool call)
                     messages.push(vscode.LanguageModelChatMessage.User(`Above is the result of calling the functions ${toolCalls.map(call => call.tool.name).join(', ')}. Use this as you iterate on the mermaid diagram.`));
-    
+
                     // RE-enter
                     return runWithTools();
                 }
             } // done with stream loop
-    
+
             logMessage(`Received candidate mermaid outline, moving to validation, for file: ${mermaidDiagram}`);
             logMessage(mermaidDiagram);
-    
+
             // Validate the diagram
             let result;
             let candidateNextDiagram = undefined;
@@ -328,7 +327,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 return { success: false, error: "Exhausted retries" };
             }
         }; // done with runWithTools
-    
+
         return await runWithTools();
     }
 
@@ -454,7 +453,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 <i class="codicon codicon-refresh"></i>
                 <span style="margin-left: 8px;">to generate diagram</span>
             </div>
-        `,`
+        `, `
         body {
             display: flex;
             justify-content: center;
@@ -469,10 +468,10 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 }
 
 function removeInnerBracesAndContent(str: string) {
-  // Match the pattern of double nested curly braces and their contents
-  const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
+    // Match the pattern of double nested curly braces and their contents
+    const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
 
-  // Replace the entire match with an empty string, effectively removing it
-  return str.replace(regex, '');
+    // Replace the entire match with an empty string, effectively removing it
+    return str.replace(regex, '');
 }
 

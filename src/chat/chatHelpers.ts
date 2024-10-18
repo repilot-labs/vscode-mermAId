@@ -3,7 +3,7 @@ import { MermaidPrompt, MermaidProps } from './mermaidPrompt';
 import { ChatMessage, ChatRole, HTMLTracer, PromptRenderer } from '@vscode/prompt-tsx';
 
 export interface IToolCall {
-    tool: vscode.LanguageModelToolDescription;
+    tool: vscode.LanguageModelToolInformation;
     call: vscode.LanguageModelToolCallPart;
     result: Thenable<vscode.LanguageModelToolResult>;
 }
@@ -100,13 +100,13 @@ export function toVsCodeChatMessages(messages: ChatMessage[]) {
                 return vscode.LanguageModelChatMessage.User(m.content, m.name);
             case ChatRole.Function: {
                 const message: vscode.LanguageModelChatMessage = vscode.LanguageModelChatMessage.User('');
-                message.content2 = [new vscode.LanguageModelToolResultPart(m.name, m.content)];
+                message.content2 = [new vscode.LanguageModelToolResultPart(m.name, [m.content])];
                 return message;
             }
             case ChatRole.Tool: {
                 {
                     const message: vscode.LanguageModelChatMessage = vscode.LanguageModelChatMessage.User(m.content);
-                    message.content2 = [new vscode.LanguageModelToolResultPart(m.tool_call_id!, m.content)];
+                    message.content2 = [new vscode.LanguageModelToolResultPart(m.tool_call_id!, [m.content])];
                     return message;
                 }
             }

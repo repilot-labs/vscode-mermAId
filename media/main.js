@@ -5,7 +5,7 @@
 
     const showOpenInWindowButton = document.currentScript.getAttribute('showOpenInWindowButton');
     if (showOpenInWindowButton !== 'false') {
-        document.getElementById('open-in-window').parentElement.classList.remove('hidden');
+        document.getElementById('open-in-window')?.parentElement.classList.remove('hidden');
     }
 
     const interval = setInterval(() => {
