@@ -18,11 +18,11 @@ export function registerGroqTool(context: vscode.ExtensionContext) {
     const Groq = require('groq-sdk');
      context.secrets.get('groq-api-key').then((apiKey) => {
            if (apiKey) {
-               console.log('Retrieved Groq API key');
+               logMessage('Retrieved Groq API key, will use groq for outline view diagram generation.');
                groq = new Groq({apiKey:apiKey});
                groqEnabled = true;
            } else {
-               console.log('No Groq API key found, defaulting to using only OpenAI.');
+                logMessage('No Groq API key found, defaulting to using only OpenAI.');
            }
        });
 }
