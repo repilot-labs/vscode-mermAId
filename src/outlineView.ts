@@ -4,7 +4,7 @@ import { IToolCall } from './chat/chatHelpers';
 import { Diagram } from './diagram';
 import { DiagramEditorPanel, WebviewResources } from './diagramEditorPanel';
 import { DiagramDocument } from './diagramDocument';
-
+import { groqEnabled, callWithGroq as sendGroqRequest } from './groqHandler';
 
 const llmInstructions = `
 You are helpful chat assistant that creates diagrams for the user using the mermaid syntax.
@@ -166,6 +166,9 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             vscode.LanguageModelChatMessage.Assistant(llmInstructions),
             vscode.LanguageModelChatMessage.User(`The file the user currently has open is: ${doc.uri.fsPath} with contents: ${doc.getText()}`),
         ];
+
+        // A flag to enable Groq if API key is present
+        let localGroqEnabled = groqEnabled;
     
         // Recursive
         let retries = 0;
@@ -177,9 +180,38 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 return { success: false, error: 'Cancelled' };
             }
     
-            const response = await model.sendRequest(messages, options, cancellationToken);
+            let response;
+            if (localGroqEnabled) {
+                response = await sendGroqRequest(messages);
+            } else {
+                    response = await model.sendRequest(messages, options, cancellationToken);
+            }
             // Loop for reading response from the LLM
-            for await (const part of response.stream) {
+            for await (let part of response.stream) {
+                if (part !== null && 'choices' in (part as any)){
+                    // This is a hack to get around Groq return style and convert it the desired shape
+                    try {
+                        const justDelta = (part as any).choices[0]?.delta;
+                        const toolCall = (part as any).choices[0]?.delta?.tool_calls;
+                        const partContent: string = (part as any).choices[0]?.delta?.content;
+                        if (partContent) {
+                            // do not translate if undefined
+                            part = new vscode.LanguageModelTextPart(partContent);
+                        }
+                        if (toolCall) {
+                            // translate tool call to a tool call object
+                            const args = toolCall[0].function.arguments;
+                            const argsParsed = JSON.parse(toolCall[0].function.arguments);
+                            // groq only has one tool, so we can hardcode the name
+                            const toolName = "mermAId_get_symbol_definition";
+                            const id = toolCall[0].id;
+                            part = new vscode.LanguageModelToolCallPart(toolName, id, argsParsed);
+                        }
+                        
+                    } catch (e) {
+                        console.log(e);
+                    }
+                }
                 if (part instanceof vscode.LanguageModelTextPart) {
                     mermaidDiagram += part.value;
                 } else if (part instanceof vscode.LanguageModelToolCallPart) {
@@ -238,7 +270,17 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 
             logMessage(`Outline generation not success (on retry ${++retries})`);
             if (retries < 4) {
-                messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
+                if (result.error.includes('STRUCT_STOP')) {
+                    // If the parse error is a missing closing parenthesis, specify that in the message
+                    messages.push(vscode.LanguageModelChatMessage.User(`The diagram was almost right, just make sure all open parentheses are closed. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
+                } else {
+                    messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
+                }
+                if (retries === 2) {
+                    // Disable Groq for the third retry since OpenAI can be more dependable
+                    logMessage('Disabling Groq for the third retry');
+                    localGroqEnabled = false;
+                }
                 return runWithTools();
             } else {
                 return { success: false, error: "Exhausted retries" };
