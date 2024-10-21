@@ -49,7 +49,7 @@ class GetSymbolDefinitionTool
         const resultMap: Map<string, string> = new Map();
         const errors: string[] = [];
         let finalMessageString = '';
-        logMessage('mermAId_get_symbol_definition invoked with symbols: ' + params.symbols.toString() + ' in file: ' + currentFilePath);
+        logMessage('mermAId_get_symbol_definition invoked with symbols: ' + params?.symbols.toString() + ' in file: ' + currentFilePath);
 
         for (const symbol of params.symbols) {
             if (token.isCancellationRequested) {
