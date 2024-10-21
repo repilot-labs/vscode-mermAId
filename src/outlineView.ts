@@ -43,6 +43,9 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('copilot-mermAId-diagram.enable-follow-outline', () => {
             followActiveDocument = true;
             vscode.commands.executeCommand('setContext', followOutlineContextKey, true);
+            // trigger a refresh on command to following the diagram
+            vscode.commands.executeCommand('copilot-mermAId-diagram.refresh-outline');
+
         }),
         vscode.commands.registerCommand('copilot-mermAId-diagram.disable-follow-outline', () => {
             followActiveDocument = false;
