@@ -109,7 +109,11 @@
               "description": "The path to the file represented as a string where you are finding these symbols you want to get the definition for. Or undefined if the location of the symbol is unknown.",
               "default": "none"
             }
-          }
+          },
+          "required": [
+              "symbols",
+              "fileString"
+          ]
         }
       },
       {
@@ -133,7 +137,10 @@
               "description": "A list of symbols to search for.",
               "default": []
             }
-          }
+          },
+          "required": [
+              "symbols"
+          ]
         }
       }
     ],
