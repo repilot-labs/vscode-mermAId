@@ -112,17 +112,17 @@ class ToolCalls extends PromptElement<ToolCallsProps, void> {
 
 		// Note- the final prompt must end with a UserMessage
 		return <>
-			{this.props.toolCallRounds.map(round => this.renderOneToolCallRound(round, sizing))}
-			<UserMessage>Above is the result of calling one or more tools, but they are not displayed, so you should explain them  if referencing them in your answer.</UserMessage>
+			{this.props.toolCallRounds.map(round => this.renderOneToolCallRound(round))}
+			<UserMessage>Above is the result of calling one or more tools. The user cannot see the results, so you should explain them to the user if referencing them in your answer.</UserMessage>
 		</>
 	}
 
-	private renderOneToolCallRound(round: ToolCallRound, sizing: PromptSizing) {
+	private renderOneToolCallRound(round: ToolCallRound) {
 		const assistantToolCalls: ToolCall[] = round.toolCalls.map(tc => ({ type: 'function', function: { name: tc.name, arguments: JSON.stringify(tc.parameters) }, id: tc.callId }));
 		// TODO- just need to adopt prompt-tsx update in vscode-copilot
 		return (
 			<Chunk>
-				<AssistantMessage toolCalls={assistantToolCalls}>{round.response || 'placeholder'}</AssistantMessage>
+				<AssistantMessage toolCalls={assistantToolCalls}>{round.response}</AssistantMessage>
 				{round.toolCalls.map(toolCall =>
 					<ToolCallElement toolCall={toolCall} toolInvocationToken={this.props.toolInvocationToken} toolCallResult={this.props.toolCallResults[toolCall.callId]}></ToolCallElement>)}
 			</Chunk>);
@@ -165,13 +165,12 @@ class ToolCallElement extends PromptElement<ToolCallElementProps, void> {
 			}
 		})
 
-		const message = (
+		return(
 			<ToolMessage toolCallId={this.props.toolCall.callId}>
 				<meta value={new ToolResultMetadata(this.props.toolCall.callId, toolResult)}></meta>
 				<ToolResult data={toolResult} />
 			</ToolMessage>
 		);
-		return message;
 	}
 }
 
