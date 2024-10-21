@@ -110,10 +110,7 @@
               "default": "none"
             }
           }
-        },
-        "supportedContentTypes": [
-          "text/plain"
-        ]
+        }
       },
       {
         "name": "mermAId_gather_symbols",
@@ -122,7 +119,7 @@
           "symbols"
         ],
         "displayName": "Gather Workspace Symbols",
-        "modelDescription": "This tool will attempt to gather all symbols in the entire workspace and return them in a list including the content of the symbol and the line information.",
+        "modelDescription": "This tool will accept a list of symbols and attempt to gather information about those symbols from the entire workspace. It can provide the location, parent symbol, and the the symbol's content.",
         "icon": "$(files)",
         "canBeReferencedInPrompt": false,
         "parametersSchema": {
@@ -137,10 +134,7 @@
               "default": []
             }
           }
-        },
-        "supportedContentTypes": [
-          "text/plain"
-        ]
+        }
       }
     ],
     "viewsContainers": {
