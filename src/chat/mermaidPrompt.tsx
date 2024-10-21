@@ -76,8 +76,8 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 					we won't be able to parse the response correctly. <br />
 					- The \`\`\` delimiter should only occur in the two places mentioned above.
 				</UserMessage>
-				<UserMessage>{docRef}</UserMessage>
-				<UserMessage>{diagramRef}</UserMessage>
+				<UserMessage priority={500}>{docRef}</UserMessage>
+				<UserMessage priority={1500}>{diagramRef}</UserMessage>
 				<RequestCommand commandName={this.props.command ?? ''}></RequestCommand>
 				<PromptReferences
 					references={this.props.request.references}
@@ -165,8 +165,11 @@ class ToolCallElement extends PromptElement<ToolCallElementProps, void> {
 			}
 		})
 
+		// Reduced priority for copilot_codebase tool call since the responses are so long and use up so many tokens.
+		const priority = this.props.toolCall.name === 'copilot_codebase' ? 800 : 1000;
+
 		return(
-			<ToolMessage toolCallId={this.props.toolCall.callId}>
+			<ToolMessage priority={priority} toolCallId={this.props.toolCall.callId}>
 				<meta value={new ToolResultMetadata(this.props.toolCall.callId, toolResult)}></meta>
 				<ToolResult data={toolResult} />
 			</ToolMessage>
