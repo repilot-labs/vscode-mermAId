@@ -55,7 +55,7 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
             }
             await DiagramDocument.createAndShow(outlineView.diagram);
         }),
-        vscode.commands.registerCommand('copilot-mermAId-diagram.open-diagram-from-outline', async () => {
+        vscode.commands.registerCommand('copilot-mermAId-diagram.open-in-window-from-outline', async () => {
             if (!outlineView.diagram) {
                 logMessage('No diagram found to open in window');
                 return;
@@ -145,13 +145,6 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                             error: message?.error,
                             friendlyError
                         };
-                        break;
-                    case 'open-in-window':
-                        if (!this._diagram) {
-                            logMessage('UNEXPECTED: No diagram found to open in window');
-                            return;
-                        }
-                        await DiagramEditorPanel.createOrShow(this._diagram);
                         break;
                     default:
                         logMessage(`(Outline) Unhandled message: ${JSON.stringify(message)}`);
@@ -396,7 +389,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         if (cancellationToken.isCancellationRequested) {
                             return { success: false, error: 'Cancelled' };
                         }
-                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram, true);
+                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram, false);
                         this._diagram = candidateNextDiagram;
                         resolve({ success: true });
                     } else {

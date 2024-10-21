@@ -3,9 +3,9 @@
 
     zoomLevel = 1;
 
-    const showOpenInWindowButton = document.currentScript.getAttribute('showOpenInWindowButton');
-    if (showOpenInWindowButton !== 'false') {
-        document.getElementById('open-in-window')?.parentElement.classList.remove('hidden');
+    const showAdditionalButtons = document.currentScript.getAttribute('showAdditionalButtons');
+    if (showAdditionalButtons !== 'false') {
+        document.getElementById("mermaid-source").classList.remove("hidden");
     }
 
     const interval = setInterval(() => {
@@ -21,11 +21,6 @@
             document.getElementById("mermaid-source").addEventListener("click", () => {
                 vscode.postMessage({
                     command: 'mermaid-source'
-                });
-            });
-            document.getElementById("open-in-window").addEventListener("click", () => {
-                vscode.postMessage({
-                    command: 'open-in-window'
                 });
             });
 
