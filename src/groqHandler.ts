@@ -93,21 +93,40 @@ Follow these formatting rules strictly:
 3. Only include **one** mermaid diagram per response.
 4. The diagram should be a **class diagram** and nothing else.
 
+Context Free Grammar for a MermaidDiagram:
+DiagramText         → ClassDiagram
+ClassDiagram        → ClassDecl | ClassDecl Relationship ClassDecl | ClassDiagram ClassDecl | ClassDiagram Relationship
+ClassDecl           → "class" ClassName "{" ClassBody "}"
+ClassBody           → (Attribute | Method)*
+Attribute           → Visibility Name ":" Type
+Method              → Visibility Name "(" ParamList ")" ":" SimpleType
+ParamList           → Param ("," Param)*
+Param               → Name ":" SimpleType
+Relationship        → ClassName RelationType ClassName
+RelationType        → "<|--" | "-->" | "<--" | "o--" | "--o" | "<|.."
+Visibility          → "+" | "-" | "#"
+ClassName           → Name
+Name                → [a-zA-Z_][a-zA-Z0-9_]*
+SimpleType          → Name
+
+# Reject Comments:
+Comment             → ε  # Comments or non-diagram text are explicitly disallowed
+
+
 Example:
 \`\`\`mermaid
 classDiagram
-ClassDesignA : +String owner
-class ClassDesignB {
-    +cwd: string
-    +status: "success"
+    class Person {
+        +name: String
+        +age: int
     }
 
-ClassDesignB <|-- ClassB
-\`\`\`
+    class Student {
+        +studentId: int
+    }
 
-things to note:
-- all open { symbols in the diagram must have a close } symbol
-- mermaid does not support nested class definitions
+    Person <|-- Student
+\`\`\`
 
 Thank you!`));
     const groqMessages = convertMessagesToGroq(messages);
