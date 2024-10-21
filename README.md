@@ -1,7 +1,6 @@
-# copilot-mermaid-diagram README
+# Description
 
-This is the README for your extension "copilot-mermaid-diagram". This extension is used to generate diagrams for your
-code. This uses VS Code copilot chat for requests.
+The merAId extension will allow you to collaborate with github co-pilot to create diagrams through the chat participant, `@mermAId`
 
 ## Features
 
@@ -13,12 +12,6 @@ code. This uses VS Code copilot chat for requests.
 see package.json
 
 ## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
 
 - `mermaid.searchForExtensions`: Search for Mermaid extensions when viewing Mermaid source.
 - `mermaid.enableGroq`: Enable outline generation with groq, requires API key to groq
