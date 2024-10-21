@@ -106,7 +106,7 @@ export function toVsCodeChatMessages(messages: ChatMessage[]) {
             case ChatRole.Tool: {
                 {
                     const message: vscode.LanguageModelChatMessage = vscode.LanguageModelChatMessage.User(m.content);
-                    message.content2 = [new vscode.LanguageModelToolResultPart(m.tool_call_id!, [m.content])];
+                    message.content2 = [new vscode.LanguageModelToolResultPart(m.tool_call_id!, [new vscode.LanguageModelTextPart(m.content)])];
                     return message;
                 }
             }
