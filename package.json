@@ -4,11 +4,23 @@
   "displayName": "vscode-mermAId",
   "description": "Exploration into Copilot Chat-powered Diagram Generation",
   "version": "0.0.1",
+  "icon": "assets/logo.png",
   "engines": {
     "vscode": "^1.94.0"
   },
   "categories": [
-    "Chat"
+    "Chat",
+    "AI",
+    "Visualization"
+  ],
+  "keywords": [
+    "mermaid",
+    "uml",
+    "sequence",
+    "diagram",
+    "copilot",
+    "groq",
+    "chat"
   ],
   "enabledApiProposals": [
     "lmTools"
