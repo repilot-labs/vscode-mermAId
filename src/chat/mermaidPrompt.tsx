@@ -81,7 +81,7 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 				<RequestCommand commandName={this.props.command ?? ''}></RequestCommand>
 				<PromptReferences
 					references={this.props.request.references}
-					priority={20}
+					priority={600}
 				/>
 				<UserMessage>{this.props.request.prompt}</UserMessage>
 				<ToolCalls
