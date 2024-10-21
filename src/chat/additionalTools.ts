@@ -47,7 +47,7 @@ class GetSymbolDefinitionTool
         const currentFilePath = params.fileString;
         const resultMap: Map<string, string> = new Map();
         const errors: string[] = [];
-        let finalMessageString = '';
+        let finalMessageString = 'Found symbol definitions:\n';
         logMessage('mermAId_get_symbol_definition invoked with symbols: ' + params?.symbols?.toString() + ' in file: ' + currentFilePath);
 
         if (!params?.symbols?.length) {
@@ -122,7 +122,7 @@ class GatherSymbolInfoTool
         const params = options.parameters;
         const resultMap: Map<string, string> = new Map();
         const errors: string[] = [];
-        let finalMessageString = '';
+        let finalMessageString = 'Found symbol information:\n';
         logMessage('mermAId_gather_symbols invoked with symbols: ' + params?.symbols?.toString());
 
         if (!params?.symbols?.length) {
@@ -184,7 +184,7 @@ class GatherSymbolInfoTool
         token: vscode.CancellationToken
     ) {
         return {
-            invocationMessage: `Getting definition for '${options.parameters.symbols?.join(', ')}'`,
+            invocationMessage: `Getting symbol information for '${options.parameters.symbols?.join(', ')}'`,
         };
     }
 }
