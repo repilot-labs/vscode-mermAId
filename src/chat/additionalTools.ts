@@ -50,6 +50,10 @@ class GetSymbolDefinitionTool
         let finalMessageString = '';
         logMessage('mermAId_get_symbol_definition invoked with symbols: ' + params?.symbols?.toString() + ' in file: ' + currentFilePath);
 
+        if (!params?.symbols?.length) {
+            return;
+        }
+
         for (const symbol of params.symbols) {
             if (token.isCancellationRequested) {
                 return;
@@ -120,6 +124,10 @@ class GatherSymbolInfoTool
         const errors: string[] = [];
         let finalMessageString = '';
         logMessage('mermAId_gather_symbols invoked with symbols: ' + params?.symbols?.toString());
+
+        if (!params?.symbols?.length) {
+            return;
+        }
 
         for (const symbol of params.symbols) {
             if (token.isCancellationRequested) {
