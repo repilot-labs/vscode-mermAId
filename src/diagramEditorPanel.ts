@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Diagram } from './diagram';
 import { logMessage } from './extension';
 import { DiagramDocument } from './diagramDocument';
+import { checkForMermaidExtensions } from './mermaidHelpers';
 
 export interface WebviewResources {
 	scriptUri: vscode.Uri;
@@ -67,7 +68,7 @@ export class DiagramEditorPanel {
 				switch (message.command) {
 					case 'mermaid-source':
 						await DiagramDocument.createAndShow(this._diagram);
-						this.checkForMermaidExtensions();
+						checkForMermaidExtensions();
 						break;
 					case 'parse-result':
 						logMessage(`(Chat) Parse Result: ${JSON.stringify(message)}`);
@@ -110,24 +111,6 @@ export class DiagramEditorPanel {
 			null,
 			this._disposables
 		);
-	}
-
-	private checkForMermaidExtensions() {
-		const setting = vscode.workspace.getConfiguration('mermaid').get('searchForExtensions');
-		if (setting !== false) {
-			const extensions = vscode.extensions.all.filter(extension => extension.packageJSON.keywords && extension.packageJSON.keywords.includes('mermaid'));
-			if (extensions.length === 0) {
-				const searchAction = 'Search';
-				const stopShowing = 'Don\'t show again';
-				vscode.window.showInformationMessage('Search for extensions to view mermaid in markdown preview?', searchAction, stopShowing).then(selectedAction => {
-					if (selectedAction === searchAction) {
-						vscode.commands.executeCommand('workbench.extensions.search', 'tag:mermaid');
-					} else if (selectedAction === stopShowing) {
-						vscode.workspace.getConfiguration('mermaid').update('searchForExtensions', false, vscode.ConfigurationTarget.Global);
-					}
-				});
-			}
-		}
 	}
 
 	public dispose() {

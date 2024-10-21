@@ -8,12 +8,12 @@ import { ToolCallRound } from './toolMetadata';
 import { COMMAND_OPEN_MARKDOWN_FILE } from '../commands';
 import { renderMessages, toVsCodeChatMessages } from './chatHelpers';
 
-let develomentMode = false;
+let developmentMode = false;
 
 export function registerChatParticipant(context: vscode.ExtensionContext) {
     const handler: vscode.ChatRequestHandler = chatRequestHandler;
 
-    develomentMode = context.extensionMode === vscode.ExtensionMode.Development;
+    developmentMode = context.extensionMode === vscode.ExtensionMode.Development;
 
     const participant = vscode.chat.createChatParticipant('copilot-diagram.mermAId', handler);
     participant.iconPath = new vscode.ThemeIcon('pie-chart');
@@ -49,7 +49,7 @@ async function chatRequestHandler(request: vscode.ChatRequest, chatContext: vsco
         toolCallResults: {},
         command: request.command,
         validationError : undefined
-    }, stream, develomentMode);
+    }, stream, developmentMode);
 
     references.forEach(ref => {
         if (ref.anchor instanceof vscode.Uri || ref.anchor instanceof vscode.Location) {
@@ -130,7 +130,7 @@ Good luck and happy diagramming!
                 toolCallResults: accumulatedToolResults,
                 command: request.command,
                 validationError
-            }, stream, develomentMode);
+            }, stream, developmentMode);
             messages = result.messages;
             const toolResultMetadata = result.metadata.getAll(ToolResultMetadata);
             if (toolResultMetadata?.length) {

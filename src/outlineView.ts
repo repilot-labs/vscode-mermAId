@@ -5,7 +5,7 @@ import { Diagram } from './diagram';
 import { DiagramEditorPanel, WebviewResources } from './diagramEditorPanel';
 import { DiagramDocument } from './diagramDocument';
 import { groqEnabled, callWithGroq as sendGroqRequest } from './groqHandler';
-import { formatMermaidErrorToNaturalLanguage } from './mermaidHelpers';
+import { checkForMermaidExtensions, formatMermaidErrorToNaturalLanguage } from './mermaidHelpers';
 
 const llmInstructions = `
 You are helpful chat assistant that creates diagrams for the user using the mermaid syntax.
@@ -134,7 +134,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                             return;
                         }
                         await DiagramDocument.createAndShow(this._diagram);
-                        // this.checkForMermaidExtensions();
+                        checkForMermaidExtensions();
                         break;
                     case 'parse-result':
                         logMessage(`(Outline) Parse Result: ${JSON.stringify(message)}`);
