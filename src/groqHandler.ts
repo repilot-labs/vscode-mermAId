@@ -18,21 +18,21 @@ export let groqEnabled = false;
  * @param context - The VS Code extension context which provides access to secrets storage and other extension resources.
  */
 export function registerGroqTool(context: vscode.ExtensionContext) {
-     context.secrets.get('groq-api-key').then((apiKey) => {
-           if (apiKey) {
-               logMessage('Retrieved groq API key, will use groq for outline view diagram generation.');
-               groq = new Groq({apiKey:apiKey});
-               groqEnabled = true;
-           } else {
-                logMessage('No groq API key found, defaulting to using only OpenAI.');
-           }
-       });
+    context.secrets.get('groq-api-key').then((apiKey) => {
+        if (apiKey) {
+            logMessage('Retrieved groq API key, will use groq for outline view diagram generation.');
+            groq = new Groq({ apiKey: apiKey });
+            groqEnabled = true;
+        } else {
+            logMessage('No groq API key found, defaulting to using only OpenAI.');
+        }
+    });
 }
 
 
 export class GroqChatResponse {
     // seems like it needs both string and text but they represent the same thing?
-    public text:Stream<ChatCompletionChunk>;
+    public text: Stream<ChatCompletionChunk>;
     public stream: Stream<ChatCompletionChunk>;
     constructor(text: Stream<ChatCompletionChunk>) {
         this.text = text;
@@ -60,7 +60,7 @@ class GroqChatToolMessage implements ChatCompletionToolMessageParam {
     }
 }
 
-export function convertMessagesToGroq(messages: (vscode.LanguageModelChatMessage|vscode.LanguageModelToolCallPart)[]): ChatCompletionMessageParam[] {
+export function convertMessagesToGroq(messages: (vscode.LanguageModelChatMessage | vscode.LanguageModelToolCallPart)[]): ChatCompletionMessageParam[] {
     const groqMessages = [];
     for (const message of messages) {
         if (message instanceof vscode.LanguageModelChatMessage) {
@@ -71,15 +71,15 @@ export function convertMessagesToGroq(messages: (vscode.LanguageModelChatMessage
                 groqMessages.push(new GroqChatUserMessage(r.content));
             }
         } else if (message instanceof vscode.LanguageModelToolCallPart) {
-            groqMessages.push(new GroqChatToolMessage(message.name, message.toolCallId));
+            groqMessages.push(new GroqChatToolMessage(message.name, message.callId));
         }
     }
     return groqMessages;
 }
 
 
-export async function callWithGroq(messages: vscode.LanguageModelChatMessage[]): Promise<GroqChatResponse>{
-    
+export async function callWithGroq(messages: vscode.LanguageModelChatMessage[]): Promise<GroqChatResponse> {
+
     messages.push(vscode.LanguageModelChatMessage.User(`
 Your goal is to create a comprehensive class diagram using mermaid based on the file attached as context.
 The class diagram you create will be used to outline this code file in the VS Code outline view.
@@ -151,7 +151,7 @@ Thank you!`));
         "stop": null,
         "tools": tools,
         "tool_choice": "auto",
-    });    
+    });
     return new GroqChatResponse(chatCompletion);
 
 }

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { logMessage } from '../extension';
-import { log } from 'console';
 
 interface IGetSymbolDefinition {
     symbols: string[];
@@ -95,12 +94,12 @@ class GetSymbolDefinitionTool
             finalMessageString += error + '\n';
         }
 
-        return {
-            'text/plain': finalMessageString,
-        };
+        return new vscode.LanguageModelToolResult([
+            new vscode.LanguageModelTextPart(finalMessageString)
+        ]);
     }
 
-    async prepareToolInvocation(
+    async prepareInvocation(
         options: vscode.LanguageModelToolInvocationPrepareOptions<IGetSymbolDefinition>,
         token: vscode.CancellationToken
     ) {
@@ -167,12 +166,12 @@ class GatherSymbolInfoTool
             finalMessageString += error + '\n';
         }
 
-        return {
-            'text/plain': finalMessageString,
-        };
+        return new vscode.LanguageModelToolResult([
+            new vscode.LanguageModelTextPart(finalMessageString)
+        ]);
     }
 
-    async prepareToolInvocation(
+    async prepareInvocation(
         options: vscode.LanguageModelToolInvocationPrepareOptions<IGetSymbolDefinition>,
         token: vscode.CancellationToken
     ) {
