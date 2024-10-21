@@ -1,6 +1,6 @@
 {
   "name": "copilot-mermaid-diagram",
-  "publisher": "Microsoft",
+  "publisher": "ms-vscode",
   "displayName": "vscode-mermAId",
   "description": "Exploration into Copilot Chat-powered Diagram Generation",
   "version": "0.0.1",
