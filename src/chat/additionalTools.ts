@@ -49,7 +49,7 @@ class GetSymbolDefinitionTool
         const resultMap: Map<string, string> = new Map();
         const errors: string[] = [];
         let finalMessageString = '';
-        logMessage('mermAId_get_symbol_definition invoked with symbols: ' + params?.symbols.toString() + ' in file: ' + currentFilePath);
+        logMessage('mermAId_get_symbol_definition invoked with symbols: ' + params?.symbols?.toString() + ' in file: ' + currentFilePath);
 
         for (const symbol of params.symbols) {
             if (token.isCancellationRequested) {
@@ -120,7 +120,7 @@ class GatherSymbolInfoTool
         const resultMap: Map<string, string> = new Map();
         const errors: string[] = [];
         let finalMessageString = '';
-        logMessage('mermAId_gather_symbols invoked with symbols: ' + params.symbols.toString());
+        logMessage('mermAId_gather_symbols invoked with symbols: ' + params?.symbols?.toString());
 
         for (const symbol of params.symbols) {
             if (token.isCancellationRequested) {
