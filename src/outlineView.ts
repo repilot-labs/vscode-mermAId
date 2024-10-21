@@ -314,19 +314,22 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 
                 // --- Try to manually fix
 
+                // TODO: 
+                //     Below is commented because calling this.validate is causing a race (due to how it sets this.parseDetails)
+                //
                 // check for inner braces error, remove if exists
-                const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
-                const regexMatches = mermaidDiagram.match(regex);
-                if (regexMatches?.length && regexMatches.length > 0) {
-                    logMessage(`Removing inner braces from diagram....`);
-                    const diagram = removeInnerBracesAndContent(mermaidDiagram);
-                    const candidateNextDiagram = new Diagram(diagram);
-                    const { success } = await this.validate(candidateNextDiagram, cancellationToken);
-                    if (success) {
-                        logMessage("Outline generation and validation success");
-                        return result;
-                    }
-                }
+                // const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
+                // const regexMatches = mermaidDiagram.match(regex);
+                // if (regexMatches?.length && regexMatches.length > 0) {
+                //     logMessage(`Removing inner braces from diagram....`);
+                //     const diagram = removeInnerBracesAndContent(mermaidDiagram);
+                //     const candidateNextDiagram2 = new Diagram(diagram);
+                //     const { success } = await this.validate(candidateNextDiagram2, cancellationToken);
+                //     if (success) {
+                //         logMessage("(Inner brace check) Outline generation and validation success");
+                //         return result;
+                //     }
+                // }
 
                 // -- Prompt LLM to fix
 
