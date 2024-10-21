@@ -105,7 +105,7 @@ class GetSymbolDefinitionTool
         token: vscode.CancellationToken
     ) {
         return {
-            invocationMessage: `Getting definition for '${options.parameters.symbols.join(', ')}'`,
+            invocationMessage: `Getting definition for '${options.parameters.symbols?.join(', ')}'`,
         };
     }
 }
@@ -177,7 +177,7 @@ class GatherSymbolInfoTool
         token: vscode.CancellationToken
     ) {
         return {
-            invocationMessage: `Getting definition for '${options.parameters.symbols.join(', ')}'`,
+            invocationMessage: `Getting definition for '${options.parameters.symbols?.join(', ')}'`,
         };
     }
 }

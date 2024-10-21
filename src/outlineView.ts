@@ -164,7 +164,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 };
             }),
         };
-        logMessage(`Available tools: ${options.tools?.map(tool => tool.name).join(', ')}`);
+        logMessage(`Available tools: ${options.tools?.map(tool => tool.name)?.join(', ')}`);
         if (cancellationToken.isCancellationRequested) {
             return { success: false, error: 'Cancelled' };
         }
@@ -265,7 +265,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                     }
     
                     // IMPORTANT The prompt must end with a USER message (with no tool call)
-                    messages.push(vscode.LanguageModelChatMessage.User(`Above is the result of calling the functions ${toolCalls.map(call => call.tool.name).join(', ')}. Use this as you iterate on the mermaid diagram.`));
+                    messages.push(vscode.LanguageModelChatMessage.User(`Above is the result of calling the functions ${toolCalls.map(call => call.tool.name)?.join(', ')}. Use this as you iterate on the mermaid diagram.`));
     
                     // RE-enter
                     return runWithTools();
