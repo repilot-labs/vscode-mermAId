@@ -136,7 +136,7 @@
         {
           "id": "mermAId-container",
           "title": "Outline (MermAId)",
-          "icon": "./assets/mermaid.svg"
+          "icon": "$(type-hierarchy-sub)"
         }
       ]
     },

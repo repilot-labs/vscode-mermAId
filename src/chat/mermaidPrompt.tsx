@@ -228,8 +228,7 @@ function chatResponseToString(response: vscode.ChatResponseTurn): string {
 			}
 
 			return '';
-		})
-		.join('');
+		})?.join('');
 }
 
 interface RequestCommandProps extends BasePromptElementProps {
