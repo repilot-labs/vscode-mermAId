@@ -61,8 +61,14 @@ export function formatMermaidErrorToNaturalLanguage(parseResult: any): string | 
                 logMessage(`DEBUG: errorLine (lineNo=${lineNum}): ${errorLineInDiagram}`);
             }
 
+            let tokenMsg: string | undefined;
+            if (mermaidError.hash.token && mermaidError.hash.expected.length) {
+                const expected = mermaidError.hash.expected.join(', ');
+                return `with token type '${mermaidError.hash.token}', where we expected one of: '${expected}'.`;
+            }
+
             // Give a nice line to feed back into the LLM
-            const friendlyError = `The text '${mermaidError.hash.text}' somewhere on line ${lineNum} has caused a parse error in the generated Mermaid diagram. ${errorLineInDiagram ? ` The full contents of that line is: '${errorLineInDiagram}' ` : ''} .  Please correct this and any subsequent lines with similar errors.`;
+            const friendlyError = `The text '${mermaidError.hash.text}' ${tokenMsg ? tokenMsg : ''} somewhere on line ${lineNum} has caused a parse error in the generated Mermaid diagram. ${errorLineInDiagram ? ` The full contents of that line is: '${errorLineInDiagram}' ` : ''} .  Please correct this and any subsequent lines with similar errors.`;
             logMessage(`friendlyError: \n${friendlyError}\n`);
             return friendlyError;
         }

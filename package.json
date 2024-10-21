@@ -164,6 +164,16 @@
     "menus": {
       "view/title": [
         {
+          "command": "copilot-mermAId-diagram.view-markdown-source-from-outline",
+          "when": "view == mermaid-outline-diagram && copilot-mermAId-diagram.isShowingDiagram",
+          "group": "navigation"
+        },
+        {
+          "command": "copilot-mermAId-diagram.open-in-window-from-outline",
+          "when": "view == mermaid-outline-diagram && copilot-mermAId-diagram.isShowingDiagram",
+          "group": "navigation"
+        },
+        {
           "command": "copilot-mermAId-diagram.refresh-outline",
           "when": "view == mermaid-outline-diagram",
           "group": "navigation"
@@ -209,6 +219,16 @@
         "command": "copilot-mermAId-diagram.disable-follow-outline",
         "title": "Disable Follow",
         "icon": "$(pinned)"
+      },
+      {
+        "command": "copilot-mermAId-diagram.open-in-window-from-outline",
+        "title": "Open Outline in Window",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "copilot-mermAId-diagram.view-markdown-source-from-outline",
+        "title": "View Markdown Source",
+        "icon": "$(markdown)"
       },
       {
         "command": "mermAId.openDiagramSvg",

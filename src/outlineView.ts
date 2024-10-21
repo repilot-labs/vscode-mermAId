@@ -20,6 +20,7 @@ Do not include any other text before or after the diagram, only include the diag
 let outlineViewCancellationTokenSource: vscode.CancellationTokenSource | undefined;
 let followActiveDocument = false;
 const followOutlineContextKey = 'copilot-mermAId-diagram.followActiveDocument';
+const isShowingDiagramContextKey = 'copilot-mermAId-diagram.isShowingDiagram';
 
 export function registerOutlineView(context: vscode.ExtensionContext) {
     const outlineView = new OutlineViewProvider(context);
@@ -38,10 +39,7 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
             }
             outlineViewCancellationTokenSource = new vscode.CancellationTokenSource();
             outlineView.generateOutlineDiagram(outlineViewCancellationTokenSource.token);
-        })
-    );
-
-    context.subscriptions.push(
+        }),
         vscode.commands.registerCommand('copilot-mermAId-diagram.enable-follow-outline', () => {
             followActiveDocument = true;
             vscode.commands.executeCommand('setContext', followOutlineContextKey, true);
@@ -49,7 +47,21 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('copilot-mermAId-diagram.disable-follow-outline', () => {
             followActiveDocument = false;
             vscode.commands.executeCommand('setContext', followOutlineContextKey, false);
-        })
+        }),
+        vscode.commands.registerCommand('copilot-mermAId-diagram.view-markdown-source-from-outline', async () => {
+            if (!outlineView.diagram) {
+                logMessage('No diagram found to show source');
+                return;
+            }
+            await DiagramDocument.createAndShow(outlineView.diagram);
+        }),
+        vscode.commands.registerCommand('copilot-mermAId-diagram.open-diagram-from-outline', async () => {
+            if (!outlineView.diagram) {
+                logMessage('No diagram found to open in window');
+                return;
+            }
+            await DiagramEditorPanel.createOrShow(outlineView.diagram);
+        }),
     );
 
     // Listen for active text editor change
@@ -73,20 +85,27 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     private _webviewResources?: WebviewResources;
     private parseDetails: { success: true } | { success: false; error: string; friendlyError?: string } | undefined = undefined;
     private _diagram?: Diagram;
+    
+    public get diagram(): Diagram | undefined {
+        return this._diagram;
+    }
 
     public async generateOutlineDiagram(cancellationToken: vscode.CancellationToken) {
         if (!this._view) {
             return;
         }
+        logMessage('Generating outline diagram...');
         this.setGeneratingPage();
         try {
-            logMessage('Generating outline diagram...');
             const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
             if (cancellationToken.isCancellationRequested) {
                 logMessage('Cancellation requested, not updating webview');
+                this.setLandingPage();
                 return;
             }
-            if (!success) {
+            if (success) {
+                vscode.commands.executeCommand('setContext', isShowingDiagramContextKey, true);
+            } else {
                 logMessage(`Error generating outline diagram from LLM`);
                 this.setErrorPage();
             }
@@ -186,7 +205,6 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             // otherwise keep it on
         }
 
-
         // Recursive
         let retries = 0;
         const runWithTools = async () => {
@@ -226,6 +244,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         }
 
                     } catch (e) {
+                        logMessage(`ERR: ${e}`);
                         console.log(e);
                     }
                 }
@@ -275,7 +294,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             logMessage(mermaidDiagram);
 
             // Validate the diagram
-            let result;
+            let result: { success: true } | { success: false, error: string; friendlyError?: string } | undefined = undefined;
             let candidateNextDiagram = undefined;
             if (mermaidDiagram.length === 0) {
                 // Diagram isn't valid if it is empty, no need to try and parse it, give better error back to model
@@ -306,6 +325,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 const regex = /\{[^{}]*\{[^{}]*\}[^{}]*\}/g;
                 const regexMatches = mermaidDiagram.match(regex);
                 if (regexMatches?.length && regexMatches.length > 0) {
+                    logMessage(`Removing inner braces from diagram....`);
                     const diagram = removeInnerBracesAndContent(mermaidDiagram);
                     const candidateNextDiagram = new Diagram(diagram);
                     const { success } = await this.validate(candidateNextDiagram, cancellationToken);
@@ -314,9 +334,31 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         return result;
                     }
                 }
-                if (candidateNextDiagram) {
-                    messages.push(vscode.LanguageModelChatMessage.User(`Please fix this mermaid parse error to make the diagram render correctly: ${result.error}. The produced diagram with the parse error is:\n${candidateNextDiagram.content}`));
+
+                // -- Prompt LLM to fix
+
+                messages.push(
+                    vscode.LanguageModelChatMessage.User(`Please fix mermaid parse errors to make the diagram render correctly.`)
+                );
+
+                if (result.friendlyError) {
+                    messages.push(
+                        vscode.LanguageModelChatMessage.User(result.friendlyError)
+                    );
                 }
+
+                messages.push(
+                    vscode.LanguageModelChatMessage.User(
+                        `The raw error reported is: ${result.error}`
+                    )
+                );
+
+                if (candidateNextDiagram) {
+                    messages.push(
+                        vscode.LanguageModelChatMessage.User(`The produced diagram with the parse error is:\n${candidateNextDiagram.content}`)
+                    );
+                }
+
                 if (retries === 2) {
                     // Disable groq for the third retry since OpenAI can be more dependable
                     logMessage('Disabling groq for the third retry');
@@ -401,6 +443,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     }
 
     private setGeneratingPage() {
+        vscode.commands.executeCommand('setContext', isShowingDiagramContextKey, false);
         if (!this._view || !this._webviewResources) {
             logMessage('ERR: No view or webview resources found');
             return;
@@ -419,6 +462,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     }
 
     private setLandingPage() {
+        vscode.commands.executeCommand('setContext', isShowingDiagramContextKey, false);
         if (!this._view || !this._webviewResources) {
             logMessage('ERR: No view or webview resources found');
             return;
@@ -444,6 +488,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     }
 
     private setErrorPage() {
+        vscode.commands.executeCommand('setContext', isShowingDiagramContextKey, false);
         if (!this._view || !this._webviewResources) {
             logMessage('ERR: No view or webview resources found');
             return;
