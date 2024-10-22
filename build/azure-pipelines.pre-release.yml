@@ -23,6 +23,7 @@ parameters:
       displayName: 🚀 Publish Pre-Release
       type: boolean
       default: false
+      customNPMRegistry: ''
 
 extends:
   template: azure-pipelines/extension/pre-release.yml@templates
