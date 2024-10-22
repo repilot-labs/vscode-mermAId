@@ -175,8 +175,8 @@ export class DiagramEditorPanel {
 		const stylesPathMainPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'vscode.css');
 		const stylesCustom = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'styles.css');
 		const animatedGraph = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media', 'animated_graph.svg');
-		const codiconsPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css');
-		const mermaidPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', 'mermaid', 'dist', 'mermaid.esm.min.mjs');
+		const codiconsPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'dist', 'media', 'codicons', 'codicon.css');
+		const mermaidPath = vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'dist', 'media', 'node_modules', 'mermaid', 'dist', 'mermaid.esm.min.mjs');
 
 		// Uri to load styles into webview
 		const stylesResetUri = webview.asWebviewUri(styleResetPath);
@@ -321,6 +321,7 @@ function getWebviewOptions(): vscode.WebviewOptions {
 		// And restrict the webview to only loading content from our extension's `media` directory and the imported codicons.
 		localResourceRoots: [
 			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media'),
+			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'dist', 'media'),
 			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist'),
 			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', 'mermaid', 'dist'),
 		]
