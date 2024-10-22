@@ -32,3 +32,4 @@ extends:
 
       - script: npm run compile
         displayName: Compile
+    customNPMRegistry: ''

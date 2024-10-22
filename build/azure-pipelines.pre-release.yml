@@ -23,7 +23,6 @@ parameters:
       displayName: 🚀 Publish Pre-Release
       type: boolean
       default: false
-      customNPMRegistry: ''
 
 extends:
   template: azure-pipelines/extension/pre-release.yml@templates
@@ -37,3 +36,4 @@ extends:
 
       - script: npm run package
         displayName: Compile
+    customNPMRegistry: ''
