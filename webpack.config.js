@@ -10,6 +10,7 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 const codiconPath = path.posix.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist', '/*').replace(/\\/g, "/");
 const mermaidPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', '/**/*.min.mjs').replace(/\\/g, "/");
+const mermaidMinPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', '/**/*.min/*.mjs').replace(/\\/g, "/");
 
 /** @type WebpackConfig */
 const extensionConfig = {
@@ -21,14 +22,11 @@ const extensionConfig = {
   plugins: [
     new CopyPlugin({
       patterns: [
+        { from: mermaidMinPath, to: 'media' },
         { from: mermaidPath, to: 'media' },
-      ],
-    }),
-    new CopyPlugin({
-      patterns: [
         { from: codiconPath, to: path.join("media", "codicons") + '/[name][ext]' },
       ],
-    })
+    }),
   ],
   output: {
     // the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
