@@ -473,14 +473,16 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             <h1 style="text-align: center; font-weight: bold;">MermAId Outline</h1>
             <p style="text-align: center;">Generate a Mermaid diagram of the active document, powered by Copilot.</p>
 
-            <div style="display: block; justify-content: center; align-items: center; gap: 16px; padding-top: 5px">
-                <div style="display: flex; justify-content: center; align-items: center; padding-bottom: 7px">
+            <div style="display: flex; justify-content: center; padding-top: 5px">
+            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 16px;">
+                <div style="display: flex; align-items: center; padding-bottom: 0px">
                     <i class="codicon codicon-refresh"></i>
                     <span style="margin-left: 8px;">to regenerate</span>
                 </div>
-                <div style="display: flex; justify-content: center; align-items: center;">
+                <div style="display: flex; align-items: center;">
                     <i class="codicon codicon-pinned"></i>
                     <span style="margin-left: 8px;">to follow the active document</span>
+                </div>
                 </div>
             </div>
         `); // TODO: Style, Add buttons?
