@@ -175,6 +175,7 @@ Good luck and happy diagramming!
             stream.markdown('Failed to display your requested mermaid diagram. Check output log for details.\n\n');
             stream.markdown(mermaidDiagram);
         }
+        
     }; // End runWithFunctions()
 
     await runWithFunctions();
@@ -202,35 +203,3 @@ function addNestingContext(messages: vscode.LanguageModelChatMessage[]) {
                     House "1" --> "1" Kitchen : kitchen
                 `));
 }
-
-function specifyAssociations(messages: vscode.LanguageModelChatMessage[]) {
-    messages.push(vscode.LanguageModelChatMessage.Assistant("Remember that all class associations/should be defined. In this example:"
-        +
-        `
-            classDiagram
-            class Supermarket {
-                +Registers: CashRegister[]
-            }
-            class CashRegister {
-                +process(product: Product)
-            }
-            `
-        +
-        "This Mermaid diagram is incomplete. You should have this defined like:" + `Supermarket "1" --> "*" CashRegister : has`
-    ));
-}
-
-function relationshipsContext(messages: vscode.LanguageModelChatMessage[]) {
-    const relationships = `
- <|-- Inheritance: Represents a "is-a" relationship where a subclass inherits from a superclass.
-*-- Composition: Represents a "whole-part" relationship where the part cannot exist without the whole.
-o-- Aggregation: Represents a "whole-part" relationship where the part can exist independently of the whole.
---> Association: Represents a general relationship between classes.
--- Link (Solid): Represents a connection or relationship between instances of classes.
-..> Dependency: Represents a "uses" relationship where one class depends on another.
-..|> Realization: Represents an implementation relationship where a class implements an interface.
-.. Link (Dashed): Represents a weaker connection or relationship between instances of classes.
-`;
-    messages.push(vscode.LanguageModelChatMessage.Assistant(relationships));
-}
-
