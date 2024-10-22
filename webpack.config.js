@@ -8,9 +8,10 @@ const CopyPlugin = require("copy-webpack-plugin");
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
-const codiconPath = path.posix.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist', '/*').replace(/\\/g, "/");
-const mermaidPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', '/**/*.min.mjs').replace(/\\/g, "/");
-const mermaidMinPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', '/**/*.min/*.mjs').replace(/\\/g, "/");
+const codiconPath = path.posix.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css').replace(/\\/g, "/");
+const codicontffPath = path.posix.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.ttf').replace(/\\/g, "/");
+const mermaidPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', 'mermaid.esm.min.mjs').replace(/\\/g, "/");
+const mermaidChunkPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', 'chunks', 'mermaid.esm.min', '*.mjs').replace(/\\/g, "/");
 
 /** @type WebpackConfig */
 const extensionConfig = {
@@ -22,9 +23,10 @@ const extensionConfig = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        { from: mermaidMinPath, to: 'media' },
-        { from: mermaidPath, to: 'media' },
+        { from: mermaidPath, to: path.join("media", "mermaid") + '/[name][ext]' },
+        { from: mermaidChunkPath, to: path.join("media", "mermaid", "chunks", "mermaid.esm.min") + '/[name][ext]' },
         { from: codiconPath, to: path.join("media", "codicons") + '/[name][ext]' },
+        { from: codicontffPath, to: path.join("media", "codicons") + '/[name][ext]' },
       ],
     }),
   ],
