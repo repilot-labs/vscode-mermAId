@@ -145,7 +145,7 @@
       "activitybar": [
         {
           "id": "mermAId-container",
-          "title": "Outline (MermAId)",
+          "title": "MermAId",
           "icon": "$(type-hierarchy-sub)"
         }
       ]
@@ -155,7 +155,7 @@
         {
           "type": "webview",
           "id": "mermaid-outline-diagram",
-          "name": "Mermaid Outline"
+          "name": "Outline"
         }
       ]
     },
