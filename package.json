@@ -160,6 +160,13 @@
       ]
     },
     "menus": {
+      "editor/title": [
+        {
+          "command": "mermAId.openMarkdownFile",
+          "when": "copilot-mermAId-diagram.diagramIsActive",
+          "group": "navigation"
+        }
+      ],
       "view/title": [
         {
           "command": "copilot-mermAId-diagram.view-markdown-source-from-outline",
@@ -234,7 +241,8 @@
       },
       {
         "command": "mermAId.openMarkdownFile",
-        "title": "Open Markdown File"
+        "title": "View Markdown Source",
+        "icon": "$(markdown)"
       }
     ]
   },
