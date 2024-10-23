@@ -117,6 +117,9 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             if (!cancellationToken.isCancellationRequested) {
                 this.setErrorPage();
             }
+            if (e instanceof Error && e.message.includes("Invalid API Key")) {
+                vscode.window.showErrorMessage(`Invalid API Key for GROQ`);
+            }
         }
     }
 
