@@ -14,6 +14,13 @@
                 zoomDiagram(-0.1);
             });
 
+            document.getElementById("mermaid-diagram").addEventListener("wheel", (event) => {
+                if (event.ctrlKey) {
+                    event.preventDefault();
+                    zoomDiagram(event.deltaY < 0 ? 0.1 : -0.1);
+                }
+            });
+
             window.linkCallback = (location) => {
                 const split = location.split("#");
 

@@ -137,6 +137,8 @@ export class DiagramEditorPanel {
 				x.dispose();
 			}
 		}
+
+		vscode.commands.executeCommand('setContext', diagramIsActive, false);
 	}
 
 	// Validates the diagram inside of a webview.  If successful,
