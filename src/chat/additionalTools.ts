@@ -194,7 +194,7 @@ async function getFullSymbolInfo(symbol: string, filepath?: string): Promise<ISy
         const refs = await vscode.commands.executeCommand<
             vscode.SymbolInformation[]
         >('vscode.executeWorkspaceSymbolProvider', symbol);
-        logMessage('ref: ' + refs);
+        logMessage('ref: ' + JSON.stringify(refs));
         if (refs.length === 0) {
             return undefined;
         }

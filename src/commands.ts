@@ -17,8 +17,17 @@ export function registerCommands() {
         }
     });
 
-    commands.registerCommand(COMMAND_OPEN_MARKDOWN_FILE, async (content: string) => {
-        const diagram = new Diagram(content);
-        await DiagramDocument.createAndShow(diagram);
+    commands.registerCommand(COMMAND_OPEN_MARKDOWN_FILE, async (content?: string) => {
+        if (!content) {
+            if (DiagramEditorPanel.currentPanel) {
+                content = DiagramEditorPanel.currentPanel.diagram.content;
+            } else {
+                return;
+            }
+        }
+        const diagram = typeof content === 'string' ? new Diagram(content) : DiagramEditorPanel.currentPanel?.diagram;
+        if (diagram) {
+            await DiagramDocument.createAndShow(diagram);
+        }
     });
 }

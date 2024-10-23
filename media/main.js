@@ -3,11 +3,6 @@
 
     zoomLevel = 1;
 
-    const showAdditionalButtons = document.currentScript.getAttribute('showAdditionalButtons');
-    if (showAdditionalButtons !== 'false') {
-        document.getElementById("mermaid-source").classList.remove("hidden");
-    }
-
     const interval = setInterval(() => {
         if (makeDraggable()) {
             clearInterval(interval);
@@ -18,10 +13,12 @@
             document.getElementById("zoom-out").addEventListener("click", () => {
                 zoomDiagram(-0.1);
             });
-            document.getElementById("mermaid-source").addEventListener("click", () => {
-                vscode.postMessage({
-                    command: 'mermaid-source'
-                });
+
+            document.getElementById("mermaid-diagram").addEventListener("wheel", (event) => {
+                if (event.ctrlKey) {
+                    event.preventDefault();
+                    zoomDiagram(event.deltaY < 0 ? 0.1 : -0.1);
+                }
             });
 
             window.linkCallback = (location) => {

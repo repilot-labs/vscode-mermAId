@@ -3,9 +3,15 @@
 'use strict';
 
 const path = require('path');
+const CopyPlugin = require("copy-webpack-plugin");
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
+
+const codiconPath = path.posix.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css').replace(/\\/g, "/");
+const codicontffPath = path.posix.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.ttf').replace(/\\/g, "/");
+const mermaidPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', 'mermaid.esm.min.mjs').replace(/\\/g, "/");
+const mermaidChunkPath = path.posix.join(__dirname, 'node_modules', 'mermaid', 'dist', 'chunks', 'mermaid.esm.min', '*.mjs').replace(/\\/g, "/");
 
 /** @type WebpackConfig */
 const extensionConfig = {
@@ -13,6 +19,17 @@ const extensionConfig = {
   mode: 'none', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
 
   entry: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
+
+  plugins: [
+    new CopyPlugin({
+      patterns: [
+        { from: mermaidPath, to: path.join("media", "mermaid") + '/[name][ext]' },
+        { from: mermaidChunkPath, to: path.join("media", "mermaid", "chunks", "mermaid.esm.min") + '/[name][ext]' },
+        { from: codiconPath, to: path.join("media", "codicons") + '/[name][ext]' },
+        { from: codicontffPath, to: path.join("media", "codicons") + '/[name][ext]' },
+      ],
+    }),
+  ],
   output: {
     // the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
     path: path.resolve(__dirname, 'dist'),

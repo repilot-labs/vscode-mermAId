@@ -88,7 +88,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
     private _webviewResources?: WebviewResources;
     private parseDetails: { success: true } | { success: false; error: string; friendlyError?: string } | undefined = undefined;
     private _diagram?: Diagram;
-    
+
     public get diagram(): Diagram | undefined {
         return this._diagram;
     }
@@ -280,7 +280,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
 
                     // IMPORTANT The prompt must end with a USER message (with no tool call)
                     messages.push(vscode.LanguageModelChatMessage.User(`Above is the result of calling the functions ${toolCalls.map(call => call.tool.name)?.join(', ')}. Use this as you iterate on the mermaid diagram.`));
-    
+
                     // RE-enter
                     return runWithTools();
                 }
@@ -303,7 +303,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 candidateNextDiagram = new Diagram(mermaidDiagram);
                 result = await this.validate(candidateNextDiagram, cancellationToken);
             }
-             
+
 
             if (result.success) {
                 logMessage("Outline generation and validation success");
@@ -395,7 +395,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         if (cancellationToken.isCancellationRequested) {
                             return { success: false, error: 'Cancelled' };
                         }
-                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram, false);
+                        this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram);
                         this._diagram = candidateNextDiagram;
                         resolve({ success: true });
                     } else {

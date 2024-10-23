@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { logMessage } from '../extension';
 import { Diagram } from '../diagram';
 import { DiagramEditorPanel } from '../diagramEditorPanel';
-import { renderPrompt } from '@vscode/prompt-tsx';
+import { renderPrompt, toVsCodeChatMessages } from '@vscode/prompt-tsx';
 import { MermaidPrompt, ToolResultMetadata } from './mermaidPrompt';
 import { ToolCallRound } from './toolMetadata';
 import { COMMAND_OPEN_MARKDOWN_FILE } from '../commands';
-import { renderMessages, toVsCodeChatMessages } from './chatHelpers';
+import { renderMessages } from './chatHelpers';
 
 let developmentMode = false;
 
