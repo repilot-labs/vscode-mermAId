@@ -98,25 +98,27 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
             return;
         }
         logMessage('Generating outline diagram...');
-        this.setGeneratingPage();
         try {
-            const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
-            if (cancellationToken.isCancellationRequested) {
-                logMessage('Cancellation requested, not updating webview');
-                this.setLandingPage();
-                return;
-            }
-            if (success) {
-                vscode.commands.executeCommand('setContext', isShowingDiagramContextKey, true);
-            } else {
-                logMessage(`Error generating outline diagram from LLM`);
-                this.setErrorPage();
-            }
+            vscode.window.withProgress({
+                location: { viewId: 'mermaid-outline-diagram' },
+                cancellable: false,
+                title: 'Generating outline diagram',
+            }, async (progress, _) => {
+                this.setGeneratingPage();
+                const { success } = await this.promptLLMToUpdateWebview(cancellationToken);
+                if (cancellationToken.isCancellationRequested) {
+                    logMessage('Cancellation requested, not updating webview');
+                    return;
+                }
+                if (success) {
+                    vscode.commands.executeCommand('setContext', isShowingDiagramContextKey, true);
+                } else {
+                    logMessage(`Error generating outline diagram from LLM`);
+                    this.setContinueInChatPage();
+                }
+            });
         } catch (e) {
             logMessage(`UNHANDLED error generating outline diagram (cancelled=${cancellationToken.isCancellationRequested}): ${e}`);
-            if (!cancellationToken.isCancellationRequested) {
-                this.setErrorPage();
-            }
             if (e instanceof Error && e.message.includes("Invalid API Key")) {
                 vscode.window.showErrorMessage(`Invalid API Key for GROQ`);
             }
@@ -134,6 +136,12 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         this._view.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
+                    case 'continue-in-chat':
+                        logMessage('Continuing in chat from outline view...');
+                        await vscode.commands.executeCommand('workbench.action.chat.open');
+                        await vscode.commands.executeCommand('workbench.action.chat.sendToNewChat', { inputValue: '@mermAId /help' });
+                        this.setLandingPage();
+                        break;
                     case 'mermaid-source':
                         if (!this._diagram) {
                             logMessage('UNEXPECTED: No diagram found to show source');
@@ -491,25 +499,39 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         `); // TODO: Style, Add buttons?
     }
 
-    private setErrorPage() {
+    private setContinueInChatPage() {
         vscode.commands.executeCommand('setContext', isShowingDiagramContextKey, false);
         if (!this._view || !this._webviewResources) {
             logMessage('ERR: No view or webview resources found');
             return;
         }
         this._view.webview.html = this.template(`
-            <div style="display: flex; justify-content: center; align-items: center; padding-bottom: 7px">
-                <i class="codicon codicon-refresh"></i>
-                <span style="margin-left: 8px;">to generate diagram</span>
+            <script type="module">
+            const vscode = acquireVsCodeApi();
+            document.getElementById('continue-in-chat-link').addEventListener('click', () => {
+            vscode.postMessage({ command: 'continue-in-chat' });
+            });
+            </script>
+            <div style="display: flex; justify-content: center; align-items: center; padding: 20px; text-align: center;">
+            <p> For large files and complex diagrams, <a id="continue-in-chat-link" class="vscode-link" href="#">continue in chat</a>.
             </div>
-        `, `
+        `,
+            `
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-        }`); // TODO: Style more?
+        }
+        .vscode-link {
+            color: var(--vscode-textLink-foreground);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .vscode-link:hover {
+            text-decoration: underline;
+        }`);
     }
 
     constructor(private readonly context: vscode.ExtensionContext) { }
