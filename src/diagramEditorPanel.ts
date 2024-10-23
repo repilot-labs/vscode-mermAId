@@ -53,6 +53,8 @@ export class DiagramEditorPanel {
 			getWebviewOptions(),
 		);
 
+		vscode.commands.executeCommand('setContext', diagramIsActive, true);
+
 		DiagramEditorPanel.currentPanel = new DiagramEditorPanel(panel, diagram);
 		return DiagramEditorPanel.currentPanel._validate();
 	}
