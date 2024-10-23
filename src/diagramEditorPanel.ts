@@ -14,6 +14,8 @@ export interface WebviewResources {
 	animatedGraphUri: vscode.Uri;
 }
 
+const diagramIsActive = 'copilot-mermAId-diagram.diagramIsActive';
+
 export class DiagramEditorPanel {
 	/**
 	 * Tracks the current panel. Only allows a single panel to exist at a time.
@@ -61,6 +63,14 @@ export class DiagramEditorPanel {
 		// Listen for when the panel is disposed
 		// This happens when the user closes the panel or when the panel is closed programmatically
 		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+		panel.onDidChangeViewState(() => {
+			if (panel.active) {
+				vscode.commands.executeCommand('setContext', diagramIsActive, true);
+			} else {
+				vscode.commands.executeCommand('setContext', diagramIsActive, false);
+			}
+		});
 
 		// Handle messages from the webview
 		this._panel.webview.onDidReceiveMessage(
@@ -238,7 +248,7 @@ export class DiagramEditorPanel {
 		`;
 	}
 
-	public static getHtmlForWebview(webview: vscode.Webview, diagram: Diagram, showAdditionalButtons: boolean = true) {
+	public static getHtmlForWebview(webview: vscode.Webview, diagram: Diagram) {
 		const { scriptUri, stylesResetUri, stylesMainUri, stylesCustomUri, codiconsUri, mermaidUri } = DiagramEditorPanel.getWebviewResources(webview);
 		const theme = vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark' : 'default';
 		return `<!DOCTYPE html>
@@ -268,12 +278,6 @@ export class DiagramEditorPanel {
 								<div class="icon"><i class="codicon codicon-zoom-out"></i></div>
 							</button>
 						</span>
-						<span class='divider'></span>
-						<span class="button">
-							<button class='hidden' id="mermaid-source">
-								<div class="icon"><i class="codicon codicon-markdown"></i>View Source</div>
-							</button>
-						</span>
 					</div>
 					<div id=mermaid-diagram class="diagram">
 						<div id=drag-handle class="dragHandle">
@@ -283,7 +287,7 @@ export class DiagramEditorPanel {
 					</div>
 					
 			
-				<script showAdditionalButtons='${showAdditionalButtons}' src="${scriptUri}"></script>
+				<script src="${scriptUri}"></script>
 				<script type="module">
 					import mermaid from '${mermaidUri}';
 
@@ -322,8 +326,6 @@ function getWebviewOptions(): vscode.WebviewOptions {
 		localResourceRoots: [
 			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'media'),
 			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'dist', 'media'),
-			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', '@vscode/codicons', 'dist'),
-			vscode.Uri.joinPath(DiagramEditorPanel.extensionUri, 'node_modules', 'mermaid', 'dist'),
 		]
 	};
 }
