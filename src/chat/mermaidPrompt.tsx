@@ -37,7 +37,7 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 		const docRef = doc ? 
 			`My focus is currently on the file ${doc.uri.fsPath}` : 
 			`There is not a current file open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`;
-		const currentDiagram =  DiagramEditorPanel.currentPanel?.diagram;
+		const currentDiagram = DiagramEditorPanel.currentPanel?.diagram;
 		const diagramRef = currentDiagram ?
 			`Refer to this if it sounds like I'm referring to an existing diagram:\n${currentDiagram.content}` :
 			`There isn't a diagram open that you created.`;

@@ -170,7 +170,6 @@ Good luck and happy diagramming!
                 validationError = getValidationErrorMessage(diagramResult.error, mermaidDiagram, true);
             } else {
                 stream.progress('Attempting to fix validation errors');
-                // we might be able to reset the messages to this message only
                 validationError = getValidationErrorMessage(diagramResult.error, mermaidDiagram, false);
             }
             // tool call results should all be cached, but we need to re-render the prompt with the error message
