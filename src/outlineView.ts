@@ -309,13 +309,13 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 // if any tools were used, add them to the context and re-run the query
                 if (toolCalls.length) {
                     const assistantMsg = vscode.LanguageModelChatMessage.Assistant('');
-                    assistantMsg.content2 = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.name, toolCall.call.callId, toolCall.call.parameters));
+                    assistantMsg.content = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.name, toolCall.call.callId, toolCall.call.parameters));
                     messages.push(assistantMsg);
                     for (const toolCall of toolCalls) {
                         // NOTE that the result of calling a function is a special content type of a USER-message
                         const message = vscode.LanguageModelChatMessage.User('');
                         const tooolResult = await toolCall.result;
-                        message.content2 = [new vscode.LanguageModelToolResultPart(toolCall.call.callId, [tooolResult])];
+                        message.content = [new vscode.LanguageModelToolResultPart(toolCall.call.callId, [tooolResult])];
                         messages.push(message);
                     }
 
