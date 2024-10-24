@@ -280,7 +280,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                             // groq only has one tool, so we can hardcode the name
                             const toolName = "mermAId_get_symbol_definition";
                             const id = toolCall[0].id;
-                            part = new vscode.LanguageModelToolCallPart(toolName, id, argsParsed);
+                            part = new vscode.LanguageModelToolCallPart(id, toolName, argsParsed);
                         }
 
                     } catch (e) {
@@ -312,7 +312,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 // if any tools were used, add them to the context and re-run the query
                 if (toolCalls.length) {
                     const assistantMsg = vscode.LanguageModelChatMessage.Assistant('');
-                    assistantMsg.content = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.name, toolCall.call.callId, toolCall.call.parameters));
+                    assistantMsg.content = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.call.callId, toolCall.tool.name, toolCall.call.parameters));
                     messages.push(assistantMsg);
                     for (const toolCall of toolCalls) {
                         // NOTE that the result of calling a function is a special content type of a USER-message
