@@ -149,21 +149,8 @@ class ToolCallElement extends PromptElement<ToolCallElementProps, void> {
 		};
 
 		const toolResult = this.props.toolCallResult ??
-			await vscode.lm.invokeTool(this.props.toolCall.name, { 
-				parameters: this.props.toolCall.parameters, 
-				toolInvocationToken: this.props.toolInvocationToken, 
-				tokenizationOptions
-			}, dummyCancellationToken);
+			await vscode.lm.invokeTool(this.props.toolCall.name, { parameters: this.props.toolCall.parameters, toolInvocationToken: this.props.toolInvocationToken, tokenizationOptions }, dummyCancellationToken);
 
-		toolResult.content = toolResult.content.map(part => {
-			if (part instanceof vscode.LanguageModelTextPart || part instanceof vscode.LanguageModelPromptTsxPart) {
-				return part;
-			} else if ((part as vscode.LanguageModelPromptTsxPart).mime) {
-				return new vscode.LanguageModelPromptTsxPart((part as vscode.LanguageModelPromptTsxPart).value, (part as vscode.LanguageModelPromptTsxPart).mime);
-			} else if (typeof (part as vscode.LanguageModelTextPart).value === 'string') {
-				return new vscode.LanguageModelTextPart((part as vscode.LanguageModelTextPart).value);
-			}
-		})
 
 		// Reduced priority for copilot_codebase tool call since the responses are so long and use up so many tokens.
 		const priority = this.props.toolCall.name === 'copilot_codebase' ? 800 : 1000;
