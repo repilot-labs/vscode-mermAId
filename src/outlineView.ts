@@ -425,7 +425,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
         const nonce = new Date().getTime().toString();
         this._view.webview.html = DiagramEditorPanel.getHtmlToValidateMermaid(this._view.webview, candidateNextDiagram, nonce);
         // wait for parseDetails to be set via message posted from webview
-        return new Promise<{ success: true } | { success: false; error: string; friendlyError?: string }>((resolve) => {
+        return new Promise<ParseDetails>((resolve) => {
             const interval = setInterval(() => {
                 const pd = this.parseDetails.find((p) => p.nonce === nonce);
                 if (pd) {
@@ -440,9 +440,9 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                         }
                         this._view.webview.html = DiagramEditorPanel.getHtmlForWebview(this._view.webview, candidateNextDiagram);
                         this._diagram = candidateNextDiagram;
-                        resolve({ success: true });
+                        resolve(pd);
                     } else {
-                        resolve({ success: false, error: pd.error });
+                        resolve(pd);
                     }
                 }
             }, 100);
