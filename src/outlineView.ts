@@ -87,6 +87,10 @@ export function registerOutlineView(context: vscode.ExtensionContext) {
             }
             await DiagramEditorPanel.createOrShow(outlineView.diagram);
         }),
+        vscode.commands.registerCommand('copilot-mermAId-diagram.continue-in-chat', async () => {
+            await vscode.commands.executeCommand('workbench.action.chat.open');
+            await vscode.commands.executeCommand('workbench.action.chat.sendToNewChat', { inputValue: '@mermAId /help' });
+        }),
     );
 
     // Listen for active text editor change
@@ -167,8 +171,7 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                 switch (message.command) {
                     case 'continue-in-chat':
                         logMessage('Continuing in chat from outline view...');
-                        await vscode.commands.executeCommand('workbench.action.chat.open');
-                        await vscode.commands.executeCommand('workbench.action.chat.sendToNewChat', { inputValue: '@mermAId /help' });
+                        await vscode.commands.executeCommand('copilot-mermAId-diagram.continue-in-chat');
                         this.setLandingPage();
                         break;
                     case 'mermaid-source':
@@ -526,6 +529,9 @@ class OutlineViewProvider implements vscode.WebviewViewProvider {
                     <i class="codicon codicon-pin"></i>
                     <span style="margin-left: 8px;">to follow the active document</span>
                 </div>
+                <div style="display: flex; align-items: center;">
+                    <i class="codicon codicon-comment-discussion"></i>
+                    <span style="margin-left: 8px;">to start a chat session</span>
                 </div>
             </div>
         `); // TODO: Style, Add buttons?
