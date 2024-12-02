@@ -1,41 +1,25 @@
 import {
-	AssistantMessage,
 	BasePromptElementProps,
-	contentType as promptTsxContentType,
-	PrioritizedList,
 	PromptElement,
-	PromptElementProps,
-	PromptPiece,
 	PromptSizing,
-	UserMessage,
-	PromptMetadata,
-	ToolCall,
-	Chunk,
-	ToolMessage,
-	PromptReference,
-} from '@vscode/prompt-tsx';
+	UserMessage
+} from '@vscode/chat-extension-utils/dist/promptTsx';
 import * as vscode from 'vscode';
-import { isTsxMermaidMetadata, ToolCallRound } from './toolMetadata';
-import { afterIterateCommandExampleDiagram, beforeIterateCommandExampleDiagram } from './chatExamples';
-import { logMessage } from '../extension';
 import { DiagramEditorPanel } from '../diagramEditorPanel';
-import { ToolResult } from '@vscode/prompt-tsx/dist/base/promptElements';
+import { logMessage } from '../extension';
+import { afterIterateCommandExampleDiagram, beforeIterateCommandExampleDiagram } from './chatExamples';
 
 export interface MermaidProps extends BasePromptElementProps {
 	request: vscode.ChatRequest;
-	command: string | undefined;
 	validationError: string | undefined;
-	context: vscode.ChatContext;
-	toolCallRounds: ToolCallRound[];
-	toolCallResults: Record<string, vscode.LanguageModelToolResult>;
 }
 
 export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 	render(state: void, sizing: PromptSizing) {
 		const doc = vscode.window.activeTextEditor?.document;
 		// full file contents are included through the prompt references, unless the user explicitly excludes them
-		const docRef = doc ? 
-			`My focus is currently on the file ${doc.uri.fsPath}` : 
+		const docRef = doc ?
+			`My focus is currently on the file ${doc.uri.fsPath}` :
 			`There is not a current file open, the root of the workspace is: ${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}`;
 		const currentDiagram = DiagramEditorPanel.currentPanel?.diagram;
 		const diagramRef = currentDiagram ?
@@ -47,178 +31,41 @@ export class MermaidPrompt extends PromptElement<MermaidProps, void> {
 			<>
 				<UserMessage>
 					Instructions: <br />
-					- You are helpful chat assistant that creates diagrams using the 
+					- You are helpful chat assistant that creates diagrams using the
 					mermaid syntax. <br />
-					- If you aren't sure which tool is relevant and feel like you are missing 
-					context, start by searching the code base to find general information. 
-					You can call tools repeatedly to gather as much context as needed as long 
-					as you call the tool with different arguments each time. Don't give up
+					- If you aren't sure which tool is relevant and feel like you are missing
+					context, start by searching the code base to find general information.
+					You can call tools repeatedly to gather as much context as needed as long
+					as you call the tool with different arguments each time.Don't give up
 					unless you are sure the request cannot be fulfilled with the tools you
 					have. <br />
-					- Don't ask for confirmation to use tools, just use them. <br />
-					- If you find a relevant symbol in the code gather more information about 
+					- If you find a relevant symbol in the code gather more information about
 					it with one of the symbols tools. <br />
 					- Use symbol information to find the file path and line number of the
 					symbol so that they can be referenced in the diagram. <br />
-					- The final segment of your response should always be a valid mermaid diagram 
-					prefixed with a line containing  \`\`\`mermaid and suffixed with a line 
+					- The final segment of your response should always be a valid mermaid diagram
+					prefixed with a line containing  \`\`\`mermaid and suffixed with a line
 					containing \`\`\`. <br />
 					- If you have the location for an item in the diagram, make it clickable by
 					adding adding the following syntax to the end of the line: <br />
 					{clickableSyntax} <br />
-					where ItemLabel is the label in the diagram and ItemFilePath and LineNumber 
-					are the location of the item, but leave off the line number if you are unsure. 
+					where ItemLabel is the label in the diagram and ItemFilePath and LineNumber
+					are the location of the item, but leave off the line number if you are unsure.
 					For example: <br />
 					{clickableSyntaxExample} <br />
-					- Make sure to only use the \`/\` character as a path separator in the links. 
+					- Make sure to only use the \`/\` character as a path separator in the links.
 					<br />
-					- Do not add anything to the response past the closing \`\`\` delimiter or 
+					- Do not add anything to the response past the closing \`\`\` delimiter or
 					we won't be able to parse the response correctly. <br />
 					- The \`\`\` delimiter should only occur in the two places mentioned above.
 				</UserMessage>
 				<UserMessage priority={500}>{docRef}</UserMessage>
 				<UserMessage priority={1500}>{diagramRef}</UserMessage>
-				<RequestCommand commandName={this.props.command ?? ''}></RequestCommand>
-				<PromptReferences
-					references={this.props.request.references}
-					priority={600}
-				/>
-				<UserMessage>{this.props.request.prompt}</UserMessage>
-				<ToolCalls
-					toolCallRounds={this.props.toolCallRounds}
-					toolInvocationToken={this.props.request.toolInvocationToken}
-					toolCallResults={this.props.toolCallResults}>
-				</ToolCalls>
+				<RequestCommand commandName={this.props.request.command ?? ''}></RequestCommand>
 				<UserMessage>{this.props.validationError}</UserMessage>
 			</>
 		);
 	}
-}
-
-interface ToolCallsProps extends BasePromptElementProps {
-	toolCallRounds: ToolCallRound[];
-	toolCallResults: Record<string, vscode.LanguageModelToolResult>;
-	toolInvocationToken: vscode.ChatParticipantToolToken | undefined;
-}
-
-const agentSupportedContentTypes = [promptTsxContentType, 'text/plain'];
-const dummyCancellationToken: vscode.CancellationToken = new vscode.CancellationTokenSource().token;
-
-class ToolCalls extends PromptElement<ToolCallsProps, void> {
-	async render(state: void, sizing: PromptSizing) {
-		if (!this.props.toolCallRounds.length) {
-			return undefined;
-		}
-
-		// Note- the final prompt must end with a UserMessage
-		return <>
-			{this.props.toolCallRounds.map(round => this.renderOneToolCallRound(round))}
-			<UserMessage>Above is the result of calling one or more tools. The user cannot see the results, so you should explain them to the user if referencing them in your answer.</UserMessage>
-		</>
-	}
-
-	private renderOneToolCallRound(round: ToolCallRound) {
-		const assistantToolCalls: ToolCall[] = round.toolCalls.map(tc => ({ type: 'function', function: { name: tc.name, arguments: JSON.stringify(tc.input) }, id: tc.callId }));
-		// TODO- just need to adopt prompt-tsx update in vscode-copilot
-		return (
-			<Chunk>
-				<AssistantMessage toolCalls={assistantToolCalls}>{round.response}</AssistantMessage>
-				{round.toolCalls.map(toolCall =>
-					<ToolCallElement toolCall={toolCall} toolInvocationToken={this.props.toolInvocationToken} toolCallResult={this.props.toolCallResults[toolCall.callId]}></ToolCallElement>)}
-			</Chunk>);
-	}
-}
-
-interface ToolCallElementProps extends BasePromptElementProps {
-	toolCall: vscode.LanguageModelToolCallPart;
-	toolInvocationToken: vscode.ChatParticipantToolToken | undefined;
-	toolCallResult: vscode.LanguageModelToolResult | undefined;
-}
-
-class ToolCallElement extends PromptElement<ToolCallElementProps, void> {
-	async render(state: void, sizing: PromptSizing): Promise<PromptPiece | undefined> {
-		const tool = vscode.lm.tools.find(t => t.name === this.props.toolCall.name);
-		if (!tool) {
-			console.error(`Tool not found: ${this.props.toolCall.name}`);
-			return <ToolMessage toolCallId={this.props.toolCall.callId}>Tool not found</ToolMessage>;
-		}
-
-		const tokenizationOptions: vscode.LanguageModelToolTokenizationOptions = {
-			tokenBudget: sizing.tokenBudget,
-			countTokens: async (content: string) => sizing.countTokens(content),
-		};
-
-		const toolResult = this.props.toolCallResult ??
-			await vscode.lm.invokeTool(this.props.toolCall.name, { input: this.props.toolCall.input, toolInvocationToken: this.props.toolInvocationToken, tokenizationOptions }, dummyCancellationToken);
-
-
-		// Reduced priority for copilot_codebase tool call since the responses are so long and use up so many tokens.
-		const priority = this.props.toolCall.name === 'copilot_codebase' ? 800 : 1000;
-
-		return(
-			<ToolMessage priority={priority} toolCallId={this.props.toolCall.callId}>
-				<meta value={new ToolResultMetadata(this.props.toolCall.callId, toolResult)}></meta>
-				<ToolResult data={toolResult} />
-			</ToolMessage>
-		);
-	}
-}
-
-export class ToolResultMetadata extends PromptMetadata {
-	constructor(
-		public toolCallId: string,
-		public result: vscode.LanguageModelToolResult,
-	) {
-		super();
-	}
-}
-
-interface HistoryProps extends BasePromptElementProps {
-	priority: number;
-	context: vscode.ChatContext;
-}
-
-class History extends PromptElement<HistoryProps, void> {
-	render(state: void, sizing: PromptSizing) {
-		return (
-			<PrioritizedList priority={this.props.priority} descending={false}>
-				{this.props.context.history.map((message) => {
-					if (message instanceof vscode.ChatRequestTurn) {
-						return (
-							<>
-								{<PromptReferences references={message.references} excludeReferences={true} />}
-								<UserMessage>{message.prompt}</UserMessage>
-							</>
-						);
-					} else if (message instanceof vscode.ChatResponseTurn) {
-						const metadata = message.result.metadata;
-						if (isTsxMermaidMetadata(metadata) && metadata.toolCallsMetadata.toolCallRounds.length > 0) {
-							return <ToolCalls toolCallResults={metadata.toolCallsMetadata.toolCallResults} toolCallRounds={metadata.toolCallsMetadata.toolCallRounds} toolInvocationToken={undefined} />;
-						}
-
-						return <AssistantMessage>{chatResponseToString(message)}</AssistantMessage>;
-					}
-				})}
-			</PrioritizedList>
-		);
-	}
-}
-
-function chatResponseToString(response: vscode.ChatResponseTurn): string {
-	return response.response
-		.map((r) => {
-			if (r instanceof vscode.ChatResponseMarkdownPart) {
-				return r.value.value;
-			} else if (r instanceof vscode.ChatResponseAnchorPart) {
-				if (r.value instanceof vscode.Uri) {
-					return r.value.fsPath;
-				} else {
-					return r.value.uri.fsPath;
-				}
-			}
-
-			return '';
-		})?.join('');
 }
 
 interface RequestCommandProps extends BasePromptElementProps {
@@ -235,9 +82,9 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 					logMessage('Iterate: No existing diagram.');
 					return (
 						<>
-						<UserMessage>
-							End this chat conversation after explaining that you cannot iterate on a diagram that does not exist.
-						</UserMessage>
+							<UserMessage>
+								End this chat conversation after explaining that you cannot iterate on a diagram that does not exist.
+							</UserMessage>
 						</>
 					)
 				}
@@ -245,17 +92,17 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 				logMessage(diagram.content);
 				return (
 					<>
-					<UserMessage>
-						Please make changes to the currently open diagram.
+						<UserMessage>
+							Please make changes to the currently open diagram.
 
-						There will be following instructions on how to update the diagram.
-						Do not make any other edits except my directed suggestion.
-						It is much less likely you will need to use a tool, unless the question references the codebase.
-						For example, if the instructions are 'Change all int data types to doubles and change Duck to Bunny' in the following diagram:
-						${beforeIterateCommandExampleDiagram}
-						Then you should emit the following diagram:
-						${afterIterateCommandExampleDiagram}
-					</UserMessage>
+							There will be following instructions on how to update the diagram.
+							Do not make any other edits except my directed suggestion.
+							It is much less likely you will need to use a tool, unless the question references the codebase.
+							For example, if the instructions are 'Change all int data types to doubles and change Duck to Bunny' in the following diagram:
+							{beforeIterateCommandExampleDiagram}
+							Then you should emit the following diagram:
+							{afterIterateCommandExampleDiagram}
+						</UserMessage>
 					</>
 				)
 			case 'uml':
@@ -297,86 +144,5 @@ class RequestCommand extends PromptElement<RequestCommandProps, void> {
 					</UserMessage>
 				);
 		}
-	}
-}
-
-interface PromptReferencesProps extends BasePromptElementProps {
-	references: ReadonlyArray<vscode.ChatPromptReference>;
-	excludeReferences?: boolean;
-}
-
-class PromptReferences extends PromptElement<PromptReferencesProps, void> {
-	render(state: void, sizing: PromptSizing): PromptPiece {
-		return (
-			<UserMessage>
-				{this.props.references.map((ref, index) => (
-					<PromptReferenceElement ref={ref} excludeReferences={this.props.excludeReferences} />
-				))}
-			</UserMessage>
-		);
-	}
-}
-
-interface PromptReferenceProps extends BasePromptElementProps {
-	ref: vscode.ChatPromptReference;
-	excludeReferences?: boolean;
-}
-
-class PromptReferenceElement extends PromptElement<PromptReferenceProps> {
-	async render(state: void, sizing: PromptSizing): Promise<PromptPiece | undefined> {
-		const value = this.props.ref.value;
-		// TODO make context a list of TextChunks so that it can be trimmed
-		if (value instanceof vscode.Uri) {
-			const fileContents = (await vscode.workspace.fs.readFile(value)).toString();
-			return (
-				<Tag name="context">
-					{!this.props.excludeReferences && <references value={[new PromptReference(value)]} />}
-					{value.fsPath}:<br />
-					``` <br />
-					{fileContents}<br />
-					```<br />
-				</Tag>
-			);
-		} else if (value instanceof vscode.Location) {
-			const rangeText = (await vscode.workspace.openTextDocument(value.uri)).getText(value.range);
-			return (
-				<Tag name="context">
-					{!this.props.excludeReferences && <references value={[new PromptReference(value)]} /> }
-					{value.uri.fsPath}:{value.range.start.line + 1}-$<br />
-					{value.range.end.line + 1}: <br />
-					```<br />
-					{rangeText}<br />
-					```
-				</Tag>
-			);
-		} else if (typeof value === 'string') {
-			return <Tag name="context">{value}</Tag>;
-		}
-	}
-}
-
-export type TagProps = PromptElementProps<{
-	name: string;
-}>;
-
-export class Tag extends PromptElement<TagProps> {
-	private static readonly _regex = /^[a-zA-Z_][\w\.\-]*$/;
-
-	render() {
-		const { name } = this.props;
-
-		if (!Tag._regex.test(name)) {
-			throw new Error(`Invalid tag name: ${this.props.name}`);
-		}
-
-		return (
-			<>
-				{'<' + name + '>'}<br />
-				<>
-					{this.props.children}<br />
-				</>
-				{'</' + name + '>'}<br />
-			</>
-		);
 	}
 }
